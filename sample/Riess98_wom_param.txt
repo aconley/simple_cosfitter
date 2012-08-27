@@ -1,0 +1,11 @@
+#Fit to Riess98 data in w/Om
+DATAFILE Riess98_sne.dat
+OUTFILE Riess98_wom_output.txt
+W -3.7 -0.0 191
+OM 0.0 0.8 191 
+ALPHA 0
+BETA 0
+PECZ 0.001
+SNDISP 1 0.04
+FLATONLYFIT YES
+VERBOSE YES

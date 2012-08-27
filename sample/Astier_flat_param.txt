@@ -1,0 +1,12 @@
+#Fit to Astier 06 data, flat om, ol fit
+DATAFILE Astier_sne.dat
+OUTFILE Astier_flat_output.txt
+OM 0.0 1.0 121
+ALPHA 0.65 2.6 121
+BETA 1.1 2.9 121
+FLATONLYFIT YES
+SNDISP 0.13
+PECZ 0.001
+DZINT 0.0001
+VERBOSE YES
+EXTENDEDOUTFILE Astier_flat_extout.txt

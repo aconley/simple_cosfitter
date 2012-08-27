@@ -1,0 +1,11 @@
+#Fit to Kowalski 08 data in w/Om, no systematics
+DATAFILE Kowalski_sne.dat
+OUTFILE Kowalski_wom_nosys_output.txt
+W -3.7 -0.0 211
+OM 0.0 0.8 141 
+ALPHA 0.0
+BETA 0.0
+SNDISP 0.0
+PECZ 0.001
+FLATONLYFIT YES
+VERBOSE YES

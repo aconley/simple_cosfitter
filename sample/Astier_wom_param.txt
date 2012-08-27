@@ -1,0 +1,13 @@
+#Fit to Astier 06 data in w/Om
+DATAFILE Astier_sne.dat
+OUTFILE Astier_wom_output.txt
+ALPHABETAOUTFILE Astier_wom_alphabeta_output.txt
+W -3.7 -0.3 111
+OM 0.0 0.8 101 
+ALPHA 0.50 2.5 91
+BETA 0.6 2.5 81
+SNDISP 0.13
+PECZ 0.001
+FLATONLYFIT YES
+VERBOSE YES
+EXTENDEDOUTFILE Astier_wom_extout.txt

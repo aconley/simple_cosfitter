@@ -1,0 +1,13 @@
+#Test parameter file
+DATAFILE knop03_extended_lowe.dat
+OUTFILE lowe_output.txt
+OM 0.0 1.8 91
+OL -0.3 2.8 101
+ALPHA 0.0 2.9 71
+ALPHABETAOUTFILE lowe_alpha.txt
+SNDISP 0.17
+PECZ 0.001
+EXTENDEDOUT lowe_extout.txt
+PARAMSUMMARYFILE lowe_results.txt
+DZINT 0.0001
+VERBOSE YES

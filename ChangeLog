@@ -1,0 +1,124 @@
+2012/08/27  Fix bug that caused alpha to be set to beta when
+	    both were fixed.  Bug found by Jeremy Neveu.
+2010/06/03  Check that input SN correlation coeffs are valid
+2010/05/21  Allow curvature specification in omprior, thanks to
+	      Shailendra Vikas
+2010/01/29  Replace WMAP5 with WMAP7 auxiliary
+2009/10/23  Use empty universe relation to interpret pecvel,
+             switch to double precision pretty much everywhere.
+2009/09/16  Add support for w fit with fixed curvature and omega_m
+2009/07/14  Update Percival BAO numbers
+	    Add reading of FITS cov matrices (experimental)
+2009/07/07  Made to work with 11/083 version of MKL.
+	    Doc fix suggested by Stephane Blondin.
+2009/03/10  Fixed lots of bugs in covMatrix woodbury if you weren't
+	     using ATLAS/MKL/accelerate
+2008/04/29  Fixed bug in acoustic scale calulation.  Added Percival BAO
+             constraints.
+2008/04/17  Fixed Woodbury Cov matrix compile errors on Mac OSX
+2008/04/03  Support for Komatsu et al. (2008) parameterization of
+             w(a).  Re-inclusion of Woodbury Cov matrix stuff.
+	     Both covmatrix classes refactored substantially.
+2008/03/12  Add beta version of WMAP5 shift parameter constraints
+2008/01/31  Added simple om prior code.
+2008/01/23  Fixed a bug in the BAO constraint where wa was being ignored
+             when trying to fit, well, wa. (Thanks to Chris Burns for
+             catching this)
+2007/12/17  Added support for having all the cosmological parameters fixed
+2007/12/04  Support for the OS X Accelerate framework.
+2007/10/10  Minor changes.  made indivchi work again.
+2007/07/20  Add support for different dispersions for different datasets.
+            Added SHOWPROGBAR to show the progress bar without getting
+             the full set of VERBOSE output.
+            Added support for second WMAP shift parameter (l_a), although
+             this requires a prior on H_0.
+            Fixed a bug in om/w0/wa WMAP constraints.
+            Runfitter can be given a list of parameter files now.
+2007/06/18  For covariance matrix case, use BLAS to do chi^2 evaluation
+             if available.  Gives a factor of ~2 speedup
+2007/05/01  Some bug fixes.  get_lumdist supports multiple redshifts.
+             Progress bars added for most fits.  Added width-colour,
+             etc. type covariance matricies.
+2007/03/13  Pre-compute luminosity distances when doing covariance
+             matrix approach, trading speed for memory requirements.
+             These are quite manageable for 2D, but may be a problem
+             for 3D.
+2007/02/15  New covariance matrix class in double precision, has 
+             tie-ins for using LAPACK, which makes inversion _much_
+             faster.
+            Fixed some of the test programs (i.e., make check)
+2007/02/09  Make wmap3 and bao constraints support 1 and 3D values,
+             updated docs.
+2007/02/08  Fixed bug in w_a expression, fixed bugs in contourshow,
+             made the fits converters work again.
+2007/02/07  Major changes:
+             w_a support added
+             All support for analytic marginalization over alpha/beta
+              removed, since it was biasing.
+             scriptM is always analytically marginalized over.
+             Many organization changes.
+             cosgrids is more encapsulated now.
+             Errors on alpha/beta now handled properly in all cases,
+              no additional cost to output them.
+             Can hold more paramerters fixed in consistent fashion.
+             New public interface to luminosity distances.
+             Full covariance matrix support, although it hasn't been
+              tested.
+2006/12/11  Added WMAP 3yr shift constraint, consolidated in
+             auxconstraint namespace with baryonpeak constraint.
+2006/11/30  Case no longer matters in parameter file
+2006/11/29  Change over to using GNU autotools for build process
+2006/11/21  Fixed two bugs affecting w fits, both of which caused
+             segfaults.
+2006/11/14  The spline class turns out to be much slower, so removed
+             it.
+2006/11/13  Introduce spline and cosmos classes to store distances
+             in splines.
+            Doc update to point out biasing problem with fixing
+             alpha, beta
+            Move over to using unsigned int in many places
+2006/10/16  Fixed minor output bug when parabolic peak fit fails.
+2006/08/25  MWV added support for the FITS output to contourshow.pro,
+             which was moved into an idl/ subdirectory.
+            Fixed bug having to do with CFITSIO using fortran array
+             ordering, which is irritating as hell.
+2006/08/17  Use maps instead of vectors to pass around results of
+             fits to cosmological and nuisance parameters.
+2006/08/15  Reorganization of fit results extended to 2/3D cosmology fits.
+             Fixed a bug in estimate_allnuisance that was not handling
+             fixed values of one of alpha/beta correctly.
+2006/08/09  Beginnings of reorganization in how fitters return results.
+             So far limited to 1D cosmology fits (i.e., omega_m in a
+             fixed curvature, fixed w universe)
+2006/08/03  Massive changes to support analytic marginalization
+             over alpha and beta.
+            New structure for keeping track of parameter ranges
+             and the like.
+            Beginnings of new structure for sorting out which fit
+             to perform.
+2006/04/30  Minor change to inner loop when covariance matrix is
+             present give a factor of three speedup.
+2006/03/20  Added support for different power law indicies in
+             baryonpeak_grid (Eisenstein used 0.98)
+2006/03/13  Use variances internally for errors.  No longer ignores
+             diagonal entries in COVFILE.
+2006/03/02  Added support for fixed but non-zero Omega_curvature.
+2006/03/01  Cov matricies now supported as long as alpha/beta are
+             fixed for error propagation.
+2006/02/28  Beginnings of incorporating covariance matricies.
+2006/02/27  Massive directory reorg
+2006/02/23  Converted some doubles to floats.
+2006/01/18  Fixed bug in cosfitterexcept output routine.
+2006/01/20  twopi is now actually set to 2*Pi instead of Pi.  
+            Thanks to MWV for catching this.  Note that this applies
+            a constant \chisq\ offset to all models, so it doesn't
+            affect the cosmological contours, just the quoted chisquare.
+2006/01/25  Modifications to contourshow by MWM to handle 3D grid case,
+            plus some speedups.  No longer complains about under/overflow!
+2006/01/26  cosgrids now support binary file input and output.
+            Tests were added to cosgridtest for this functionality.
+            A non-initialization error for om,od,w,alpha fits was fixed.
+             Previously they wouldn't work.
+2006/01/27  Parameter file parsing broken out of fitter to paramfile.
+	    Added ability to convert output to fits files if cfitsio is
+             available.
