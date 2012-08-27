@@ -22,7 +22,8 @@ int main(int argc, char** argv) {
 
   string paramfile;
   double intrinsicval = 0.0;
-  double w0 = -1, wa = 0.0, om=1.0, ol=0.0, sm=23.9, al=1.45, beta=4.1;
+  double w0 = -1, wa = 0.0, om=1.0, ol=0.0, sm1=23.9, sm2=23.9;
+  double al=1.45, beta=4.1;
   int c;
   bool flatflag = false, intrinsicflag = false;
   
@@ -35,7 +36,8 @@ int main(int argc, char** argv) {
     {"wa", required_argument,0, '1'},
     {"om",required_argument,0, 'm'},
     {"ol",required_argument,0, 'l'},
-    {"sm", required_argument, 0, 's'},
+    {"sm1", required_argument, 0, 's'},
+    {"sm2", required_argument, 0, 't'},
     {"alpha", required_argument,0, 'a'},
     {"beta", required_argument, 0, 'b'},
     {"flat", no_argument, 0, 'f'},
@@ -43,16 +45,17 @@ int main(int argc, char** argv) {
     { 0 , 0 , 0 , 0 } 
   };
 
-  while ( (c = getopt_long(argc, argv, "h0:1:m:l:s:a:b:fi:",
+  while ( (c = getopt_long(argc, argv, "h0:1:m:l:s:t:a:b:fi:",
 			   long_options,&option_index )) != -1 )
     switch(c) {
     case 'h' :
       cerr << "NAME" << endl;
-      cerr << "\t indivchi" << endl;
+      cerr << "\t indivchi_twoscriptm" << endl;
       cerr << "SYNOPSIS" << endl;
       cerr << "\tindivchi [ --w0=W0 ] [ --wa=WA ] [ -m | --om=OM ] "
 	   << "[ -l | --ol=OL ]" << std::endl;
-      cerr << "\t [ -s | --sm=SM ] [ -a | --alpha=ALPHA ] [ -b | --beta=BETA ]"
+      cerr << "\t [ -s | --sm1=SM1 ] [ -t | --sm2=SM2 ]" << endl;
+      cerr << "\t [ -a | --alpha=ALPHA ] [ -b | --beta=BETA ]"
 	   << endl;
       cerr << "\t [ -f ] [ -i | --intrinsic=INTRINSIC ] PARAMFILE" << endl;
       cerr << "DESCRIPTION" << endl;
@@ -77,8 +80,10 @@ int main(int argc, char** argv) {
 	"matter (OMEGA_M) (def: 1)" << endl;
       cerr << "\t-l, --ol OL\n\t\tDensity parameter of dark energy " <<
 	"(OMEGA_LAMBDA) (def: 0)" << endl;
-      cerr << "\t-s, --sm SM\n\t\tScript-M, luminosity/Hubble constant " <<
-	"nusiance param (SCRIPTM)\n\t\t(def: 23.9)" << endl;
+      cerr << "\t-s, --sm1 SM1\n\t\tScript-M_1, luminosity/Hubble constant " <<
+	"nusiance param (SCRIPTM1)\n\t\t(def: 23.9)" << endl;
+      cerr << "\t-t, --sm2 SM2\n\t\tScript-M_2, luminosity/Hubble constant " <<
+	"nusiance param (SCRIPTM1)\n\t\t(def: 23.9)" << endl;
       cerr << "\t-a, --alpha ALPHA\n\t\tSlope of the stretch-luminosity " <<
 	"relation (def: 1.45)" << endl;
       cerr << "\t-b, --beta BETA\n\t\tSlope of the colour-luminosity " <<
@@ -103,7 +108,10 @@ int main(int argc, char** argv) {
       ol = atof( optarg );
       break;
     case 's' :
-      sm = atof( optarg );
+      sm1 = atof( optarg );
+      break;
+    case 't' :
+      sm2 = atof( optarg );
       break;
     case 'a' :
       al = atof( optarg );
@@ -147,8 +155,10 @@ int main(int argc, char** argv) {
   results_map[ param_tags::alpha ] = pres;
   pres.name = param_tags::betatag; pres.value = beta;
   results_map[ param_tags::beta ] = pres;
-  pres.name = param_tags::scriptmtag; pres.value = sm;
-  results_map[ param_tags::scriptm ] = pres;
+  pres.name = param_tags::scriptm1tag; pres.value = sm1;
+  results_map[ param_tags::scriptm1 ] = pres;
+  pres.name = param_tags::scriptm2tag; pres.value = sm2;
+  results_map[ param_tags::scriptm2 ] = pres;
 
   std::map<unsigned int, double> intrinsic;
   try {

@@ -36,6 +36,9 @@ struct SNeDataEntry {
   double cov_mag_widthpar; //!< Covariance between magnitude and widthpar
   double cov_mag_colourpar; //!< Covariance between magnitude and colourpar
   double cov_widthpar_colourpar; //!< Covariance between widthpar and colourpar
+  double thirdpar;  //!< Third parameter
+  double var_thirdpar; //!< Variance of third par
+  unsigned int scriptmset; //!< Which scriptm this is in
   unsigned int dataset; //!< Subset identifier
 
   /*! \brief Constructor */
@@ -43,13 +46,16 @@ struct SNeDataEntry {
 	       double WIDTHPAR=0, double VARWIDTHPAR=0,double MAG=0,
 	       double VARMAG=0, double COLOURPAR=0, double VARCOLOURPAR=0, 
 	       double COV_MAG_WIDTHPAR=0, double COV_MAG_COLOURPAR=0, 
-	       double COV_WIDTHPAR_COLOURPAR=0, unsigned int DATASET=0) :
+	       double COV_WIDTHPAR_COLOURPAR=0, double THIRDPAR=0,
+	       double VARTHIRDPAR=0, unsigned int SCRIPTMSET=0, 
+	       unsigned int DATASET=0) :
     name(SNNAME),zcmb(ZCMB),zhel(ZHEL),var_z(VARZ),widthpar(WIDTHPAR),
     var_widthpar(VARWIDTHPAR),mag(MAG),var_mag(VARMAG),colourpar(COLOURPAR),
     var_colourpar(VARCOLOURPAR),cov_mag_widthpar(COV_MAG_WIDTHPAR),
     cov_mag_colourpar(COV_MAG_COLOURPAR),
     cov_widthpar_colourpar(COV_WIDTHPAR_COLOURPAR),
-    dataset(DATASET)
+    thirdpar(THIRDPAR), var_thirdpar(VARTHIRDPAR),
+    scriptmset(SCRIPTMSET), dataset(DATASET)
   { };
 
   /*! \brief Copy Constructor */
@@ -62,7 +68,8 @@ struct SNeDataEntry {
     cov_mag_widthpar = inval.cov_mag_widthpar;
     cov_mag_colourpar = inval.cov_mag_colourpar;
     cov_widthpar_colourpar = inval.cov_widthpar_colourpar;
-    dataset = inval.dataset;
+    thirdpar = inval.thirdpar; var_thirdpar = inval.var_thirdpar;
+    scriptmset = inval.scriptmset; dataset = inval.dataset;
   }
 
   /*! \brief Returns corrected magnitude */
@@ -75,6 +82,8 @@ struct SNeDataEntry {
   double getCorrectedMagVar(double, double) const;
 
   unsigned int getDataSet() const { return dataset; } //!< Returns dataset number
+  void setScriptmSet(double);
+  unsigned int getScriptmSet() const { return scriptmset; }
 
   bool isCovValid() const; //!< Check if covariance info is valid
 
@@ -89,7 +98,8 @@ struct SNeDataEntry {
     cov_mag_widthpar = inval.cov_mag_widthpar;
     cov_mag_colourpar = inval.cov_mag_colourpar;
     cov_widthpar_colourpar = inval.cov_widthpar_colourpar;
-    dataset = inval.dataset;
+    thirdpar = inval.thirdpar; var_thirdpar = inval.var_thirdpar;
+    scriptmset = inval.scriptmset; dataset = inval.dataset;
     return *this;
   }
 
@@ -202,7 +212,8 @@ class SNeData {
   void remove(const std::vector<std::string>&, bool strict=true); //!< Removes specified elements in place using names
   SNeData copy_remove(const std::vector<int>&) const; //!< Returns a new list with indexed entries removed
   SNeData copy_remove(const std::vector<std::string>&, bool strict=true) const; //!< Returns a new list with entries with names in argument removed
-  
+
+  void setScriptmSet(double);
   std::set<unsigned int> getDataSetList() const; //!< Returns the datasets present
 
   bool isCovValid() const; //!< Check if covariance info is valid for all SN

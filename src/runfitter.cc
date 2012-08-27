@@ -25,10 +25,11 @@ int main(int argc, char **argv) {
     switch(c) {
     case 'h' :
       std::cerr << "NAME" << std::endl;
-      std::cerr << "\trunfitter -- Runs simple_cosfitter on a data set" 
+      std::cerr << "\trunfitter_twoscriptm -- Runs simple_cosfitter on a data set" 
 		<< std::endl;
+      std::cerr << "\twith two scriptm values." << std::endl;
       std::cerr << "SYNOPSIS" << std::endl;
-      std::cerr << "\trunfitter PARAMFILE [PARAMFILE2 ...]" << std::endl;
+      std::cerr << "\trunfitter_twoscriptm PARAMFILE [PARAMFILE2 ...]" << std::endl;
       std::cerr << "DESCRIPTION" << std::endl;
       std::cerr << "\tCommand line routine for doing cosmology fits." 
 		<< std::endl;

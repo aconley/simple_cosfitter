@@ -70,10 +70,16 @@ class cosfitter {
   //Convenience variables for inverse covariance matrix
   mutable covMatrix invcovmatrix; //!< Holds current inverse covariance matrix \f$V^{-1}\f$.  Keeps us from having to continually re-allocate
 
-  mutable std::vector<double> invcovmatrix_rowsums; //!< Holds the sums of the rows of the inverse covariance matrix \f$V^{-1} \cdot \vec{1}\f$
+  mutable std::vector<double> A1; //!< Has 1 where in scriptmset 1
+  mutable bool has_A2; //!< We have some elements in A2
+  mutable std::vector<double> A2; //!< Has 2 where in scriptmset 2
+  mutable std::vector<double> invcovmatrix_A1; //!< Holds the sums of the rows of the inverse covariance matrix \f$V^{-1} \cdot \vec{A1}\f$
+  mutable std::vector<double> invcovmatrix_A2; //!< Holds the sums of the rows of the inverse covariance matrix \f$V^{-1} \cdot \vec{A2}\f$
 
   //Analytic marginalization convenience variables
-  mutable double amarg_E; //!< \f$ \vec{1}^T \cdot  V^{-1}  \cdot \vec{1} \f$, useful for analytic marginalization
+  mutable double amarg_D;  //!< \f$ \vec{A_1}^T \cdot  V^{-1}  \cdot \vec{A_2} \f$, useful for analytic marginalization
+  mutable double amarg_E; //!< \f$ \vec{A_1}^T \cdot  V^{-1}  \cdot \vec{A_1} \f$, useful for analytic marginalization
+  mutable double amarg_F; //!< \f$ \vec{A_2}^T \cdot  V^{-1}  \cdot \vec{A_2} \f$, useful for analytic marginalization
 
   //Convenience arrays for non-diagonal case
   mutable double* diffarr;  //Difference array between SN mags and cosmo prediction, non-diagonal case
@@ -166,7 +172,7 @@ class cosfitter {
   void indivchi(const std::map< param_tags::paramcodes, param_results >&,
 		const std::map< unsigned int, double >&) const; //!< Prints out individual \f$ \chi^2 \f$ contributions
 
-  double estimate_scriptm(const std::map< param_tags::paramcodes, param_results >& ) const; //!< Given the other parameters, gives the best value of \f${\mathcal M}\f$
+  std::pair<double,double> estimate_scriptm(const std::map< param_tags::paramcodes, param_results >& ) const; //!< Given the other parameters, gives the best value of \f${\mathcal M}\f$
 
 
 };

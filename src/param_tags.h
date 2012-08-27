@@ -11,7 +11,7 @@ namespace param_tags {
   // don't have to be unique
   //The order should be that we output prob surfaces in
   enum paramcodes { omegam=0, omegade=1, w0=2, wa=3, alpha=100, beta=101, 
-		    scriptm=102, unknown = 10000 }; //!< Codes for various parameters
+		    scriptm1=102, scriptm2=103, unknown = 10000 }; //!< Codes for various parameters
   enum paramtype { unset, nuisance, cosmological }; //!< What type of parameter
 
   typedef std::pair< paramcodes, paramtype > paramspec;
@@ -24,6 +24,7 @@ namespace param_tags {
   const std::string watag = "w_a"; //!< \f$w_a\f$
   const std::string alphatag = "\\alpha"; //!< \f$\alpha\f$
   const std::string betatag = "\\beta"; //!< \f$\beta\f$
-  const std::string scriptmtag = "\\mathcal{M}"; //!< \f${\mathcal M}\f$
+  const std::string scriptm1tag = "\\mathcal{M}_1"; //!< \f${\mathcal M}_1\f$
+  const std::string scriptm2tag = "\\mathcal{M}_2"; //!< \f${\mathcal M}_2\f$
 }
 #endif

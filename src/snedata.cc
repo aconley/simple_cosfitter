@@ -13,6 +13,10 @@
 
 using namespace std;
 
+void SNeDataEntry::setScriptmSet(double val) {
+  if (thirdpar > val) scriptmset=2; else scriptmset=1;
+}
+
 /*!
   If it is necessary to calculate a large number of these, it is more
   efficient to do it by hand than to use this function.
@@ -122,7 +126,7 @@ void SNeData::zcmbsort() {
 
 /*!
 Each line in the data file should have the format:
-snname zcmb zhel dz widthpar dwidthpar colourpar dcolourpar cov_mag_width cov_mag_colourpar cov_widthpar_colourpar [dataset]
+snname zcmb zhel dz widthpar dwidthpar colourpar dcolourpar cov_mag_width cov_mag_colourpar cov_widthpar_colourpar scriptmset [dataset]
 
 snname is a string (quotes are not necessary, and in fact probably not
 a good idea), but the others are all
@@ -156,7 +160,7 @@ void SNeData::readData(const std::string& FileName, bool verbose) {
   std::stringstream str("");
   SNeDataEntry sndata;
 
-  double dz, dmag, dwidthpar, dcolourpar;
+  double dz, dmag, dwidthpar, dcolourpar, dthirdpar;
   unsigned int wsize;
 
   points.resize(0);
@@ -169,7 +173,7 @@ void SNeData::readData(const std::string& FileName, bool verbose) {
     wsize = words.size();
     if (wsize < 13) continue; //Not enough entries on line
     
-    if (wsize > 14) {
+   if (wsize > 16) {
       std::stringstream errstrng("");
       errstrng << "Too many entries on line: " << line;
       throw CosFitterExcept("SNeData","readData",
@@ -188,19 +192,21 @@ void SNeData::readData(const std::string& FileName, bool verbose) {
     str.str(words[7]); str.clear(); str >> dwidthpar;
     str.str(words[8]); str.clear(); str >> sndata.colourpar;
     str.str(words[9]); str.clear(); str >> dcolourpar;
-    str.str(words[10]); str.clear(); str >> sndata.cov_mag_widthpar;
-    str.str(words[11]); str.clear(); str >> sndata.cov_mag_colourpar;
-    str.str(words[12]); str.clear(); str >> sndata.cov_widthpar_colourpar;
+    str.str(words[10]); str.clear(); str >> sndata.thirdpar;
+    str.str(words[11]); str.clear(); str >> dthirdpar;
+    str.str(words[12]); str.clear(); str >> sndata.cov_mag_widthpar;
+    str.str(words[13]); str.clear(); str >> sndata.cov_mag_colourpar;
+    str.str(words[14]); str.clear(); str >> sndata.cov_widthpar_colourpar;
 
-    if (wsize == 14) {
-      str.str(words[13]); str.clear(); str >> sndata.dataset;
+    if (wsize == 16) {
+      str.str(words[15]); str.clear(); str >> sndata.dataset;
     }
 
-    sndata.var_z = dz*dz;
-    sndata.var_mag = dmag*dmag;
-    sndata.var_widthpar = dwidthpar*dwidthpar;
+    sndata.var_z         = dz*dz;
+    sndata.var_mag       = dmag*dmag;
+    sndata.var_widthpar  = dwidthpar*dwidthpar;
     sndata.var_colourpar = dcolourpar*dcolourpar;
-
+    sndata.var_thirdpar  = dthirdpar*dthirdpar;
     points.push_back(sndata);
   }
   
@@ -228,7 +234,6 @@ void SNeData::readData(const std::string& FileName, bool verbose) {
     throw CosFitterExcept("SNeData","readData",
 			  errstrng.str(),16);
   }
-
 }
 
 /*!
@@ -690,6 +695,11 @@ SNeData SNeData::copy_remove( const std::vector<std::string>& namearr,
   return retval;
 }
 
+void SNeData::setScriptmSet(double val) {
+  for (std::vector<SNeDataEntry>::iterator pos = points.begin();
+       pos != points.end(); ++pos) pos->setScriptmSet(val); 
+}
+
 std::set<unsigned int> SNeData::getDataSetList() const {
   std::set<unsigned int> retset;
   for (std::vector<SNeDataEntry>::const_iterator pos = points.begin();
@@ -697,6 +707,7 @@ std::set<unsigned int> SNeData::getDataSetList() const {
     retset.insert( pos->dataset );
   return retset;
 }
+
 
 bool SNeData::isCovValid() const {
   if (points.size() == 0) return true;

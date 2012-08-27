@@ -30,12 +30,15 @@ fitparam::fitparam() : ocurv(0.0), loop_order( fitparam::unknown ),
 		       strategy( fitparam::not_set ), errsfixed( false ) {
   param_struct pstruct;
 
-  //Only one we always have
-  pstruct.name=param_tags::scriptmtag;
-  pstruct.param_spec.first=param_tags::scriptm;
+  //Only ones we always have
+  pstruct.name=param_tags::scriptm1tag;
+  pstruct.param_spec.first=param_tags::scriptm1;
   pstruct.param_spec.second = param_tags::nuisance;
   pstruct.fit = param_struct::analytic; 
-  params[ param_tags::scriptm ] = pstruct;
+  params[ param_tags::scriptm1 ] = pstruct;
+  pstruct.name=param_tags::scriptm2tag;
+  pstruct.param_spec.first=param_tags::scriptm2;
+  params[ param_tags::scriptm2 ] = pstruct;
 
   ocurv = 0.0; //i.e., flat
   dzint = 0.0005;
@@ -60,6 +63,7 @@ fitparam::fitparam() : ocurv(0.0), loop_order( fitparam::unknown ),
   binaryout = false;
   verbose = false;
   showprogbar = false;
+  scriptmcut = 0.0;
 
   outputfilename = std::string("");
 }
@@ -458,6 +462,13 @@ void fitparam::readFile(const std::string& paramfilename, bool silent) {
 			      errstrng.str(),4);
       }
     } 
+    else if (word0=="SCRIPTMCUT") {
+      if (words.size()!=2) {
+	throw CosFitterExcept("cosfitter","readParamFile",
+			      "PARAM USAGE : SCRIPTMCUT scriptmcut",2);
+      }
+      str.str(words[1]); str.clear(); str >> scriptmcut;
+    }
     else {
       cerr << "WARNING : unparsed parameter " << words[0] << endl;
     }

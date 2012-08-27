@@ -40,7 +40,7 @@ const double cosfitter::inv_twopi =
 
 cosfitter::cosfitter() {
   nsn = 0;
-  amarg_E = 0.0;
+  amarg_D = amarg_E = amarg_F = 0.0;
   pre_vars.clear();
   have_fixed_alpha = false;
   have_fixed_beta = false;
@@ -173,7 +173,7 @@ void cosfitter::calcPreErrs() {
       if (fparam.verbose) 
 	cout << "Pre-inverting covariance matrix as errs are fixed...";
 
-      //This also fills in the row sums and amarg_E
+      //This also fills in the row sums and amarg_D, amarg_E, amarg_F
       computeInvCovMatrix( curr_alpha, curr_beta );
 
       if ( amarg_E == 0.0 )
@@ -187,17 +187,20 @@ void cosfitter::calcPreErrs() {
       //Calculate the auto-marginalization parameter, which we can
       // do because the errors are fixed
       double current_invvar;
-      current_invvar = 1.0/pre_vars[0];
-      amarg_E = current_invvar;
+      //Amarg_D is zero -- there are no cross terms
+      amarg_D = amarg_E = amarg_F = 0.0; 
 
-      for (unsigned int i = 1; i < nsn; ++i) {
+      for (unsigned int i = 0; i < nsn; ++i) {
 	current_invvar = 1.0 / pre_vars[i];
-	amarg_E += current_invvar;
+	switch (sne[i].scriptmset) {
+	case 1 :
+	  amarg_D += current_invvar;
+	  break;
+	case 2 :
+	  amarg_F += current_invvar;
+	  break;
+	}
       }
-      if ( amarg_E == 0.0 )
-	throw CosFitterExcept("cosfitter","calcPreErrs",
-			      "Sum of inverse cov matrix entries == 0.0",8);
-
     }    
 
   } else {
@@ -208,7 +211,7 @@ void cosfitter::calcPreErrs() {
     // evaluate the alpha/beta cross term
 
     if (fixedintrinsic) {
-      for (unsigned int i = 0; i < nsn; ++i) {
+      for (i = 0; i < nsn; ++i) {
 	emptyfac = (1.0+sne[i].zcmb)/(sne[i].zcmb*(1+0.5*sne[i].zcmb));
 	dzerrsq = fparam.pecz*fparam.pecz + sne[i].var_z;
 	dzerrsq *= zfacsq*emptyfac*emptyfac;
@@ -273,7 +276,7 @@ void cosfitter::calcPreErrs() {
 
 /*!
   Updates the inverse covariance matrix and fills in the row
-  sums and analytic marginalization E parameter.
+  sums and analytic marginalization parameters.
 
   \param[in] alpha \f$\alpha\f$
   \param[in] beta \f$\beta\f$
@@ -325,19 +328,12 @@ void cosfitter::computeInvCovMatrix( double alpha,
   int status;
   status = 0;
   if ( sne.haveFullCovMatrix() ) {
-    //std::cerr << "Doing inversion with " << alpha << " " << beta << std::endl;
-
     //We need to do a full, N^3 inversion
     sne.getCovMatrixSNeRef().getCombinedCovMatrix( invcovmatrix, alpha, beta );
     for (unsigned int i = 0; i < nsn; ++i)
       invcovmatrix[i][i] += working_vec[i];
 
-    //ofstream of("covmatrix.txt");
-    //of << invcovmatrix << std::endl;
-    //of.close();
-
     invcovmatrix.invert(status);
-    //std::cout << status << std::endl;
   } else {
     //Woodbury form -- should be much faster
     sne.getWoodburyCovMatrixSNeRef().getInvCovMatrix( invcovmatrix, 
@@ -379,9 +375,26 @@ void cosfitter::computeInvCovMatrix( double alpha,
 			  "Error inverting",1);
   }
 
-  //Get the total and row-sums for later
-  amarg_E = invcovmatrix.getRowTotals( invcovmatrix_rowsums );
-
+  //Get the amarg parameters
+  invcovmatrix_A1 = invcovmatrix.mult( A1, status );
+  if (has_A2) invcovmatrix_A2 = invcovmatrix.mult( A2, status );
+  if (status)
+    throw CosFitterExcept("cosfitteR","computeInvCovMatrix",
+			 "Error prepping A1 or A2 product",2);
+  //amarg_E = A1 V^-1 A1
+  amarg_E = A1[0] * invcovmatrix_A1[0];
+  for (unsigned int i = 1; i < nsn; ++i) amarg_E += A1[i]*invcovmatrix_A1[i];
+  if (has_A2) {
+    //Amarg_D = A1 V^-1 A2
+    amarg_D = A1[0] * invcovmatrix_A2[0];
+    for (unsigned int i = 1; i < nsn; ++i) amarg_D += A1[i]*invcovmatrix_A2[i];
+    //amarg_F = A2 V^-1 A2
+    amarg_F = A2[0] * invcovmatrix_A2[0];
+    for (unsigned int i = 1; i < nsn; ++i) amarg_F += A2[i]*invcovmatrix_A2[i];
+  } else {
+    amarg_D = 0.0;
+    amarg_F = 0.0;
+  }
 }
 
 /*!
@@ -2407,6 +2420,8 @@ void cosfitter::calcLikelihood_lab( cosgrid2D& likelihoodtarg ) const {
   // which makes for pretty minor modifications to the formulae
   //So -- first estimate scriptm by forming weighted mean without
   // correctly propagated errors
+  //We assume scriptm0 and scriptm1 are fairly close so don't bother
+  // getting two of them.
   double wtval,scriptm0;
   wtval = 0.0;
   scriptm0 = 0.0;
@@ -2418,8 +2433,9 @@ void cosfitter::calcLikelihood_lab( cosgrid2D& likelihoodtarg ) const {
   scriptm0 /= wtval;
 
   double alpha, beta, alpha_beta, alpha_sq, beta_sq, chisq;
-  double amarg_A, amarg_B, diffmag, error_sq, curr_invvar;
-  
+  double amarg_A, amarg_B, amarg_C, diffmag, error_sq, curr_invvar;
+  double steege, steege2;
+
   for (unsigned int i=0; i < likelihoodtarg.getAxisN(0); ++i) {
     alpha = likelihoodtarg.getAxisVal(0,i);
     alpha_sq = alpha*alpha;
@@ -2429,7 +2445,7 @@ void cosfitter::calcLikelihood_lab( cosgrid2D& likelihoodtarg ) const {
       beta_sq = beta*beta;
       alpha_beta = alpha * beta;
 
-      amarg_A = amarg_B = amarg_E = 0.0;
+      amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
       for (unsigned int k = 0; k < nsn; ++k) {
 	diffmag = sne[k].mag - dl[k] + alpha * (sne[k].widthpar-1)
 	  - beta * sne[k].colourpar - scriptm0;
@@ -2441,12 +2457,23 @@ void cosfitter::calcLikelihood_lab( cosgrid2D& likelihoodtarg ) const {
           - 2.0 * alpha_beta * sne[k].cov_widthpar_colourpar;
 	curr_invvar = 1.0 / error_sq;
 
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-	amarg_E += curr_invvar;
+	steege = diffmag * curr_invvar;
+	steege2 = A1[k];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Note amarg_D is zero if the cov matrix is diagonal
+	  steege2 = A2[k];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
       chisq = amarg_A + log(amarg_E * inv_twopi) 
 	- amarg_B * amarg_B / amarg_E;
+      if (has_A2)
+	chisq += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
+
       //convert to relative probability
       likelihoodtarg[i][j] = exp( -0.5 * chisq + halfchi0 );
     }
@@ -2495,7 +2522,8 @@ void cosfitter::calcLikelihood_la( cosgrid1D& likelihoodtarg ) const {
 			    "Non fixed beta value",4);
     
     double alpha, beta, alpha_beta, alpha_sq, beta_sq, chisq;
-    double amarg_A, amarg_B, diffmag, error_sq, curr_invvar;
+    double steege, steege2;
+    double amarg_A, amarg_B, amarg_C, diffmag, error_sq, curr_invvar;
     beta = it->second.fixval; 
     beta_sq = beta*beta;
 
@@ -2504,7 +2532,7 @@ void cosfitter::calcLikelihood_la( cosgrid1D& likelihoodtarg ) const {
       alpha_sq = alpha*alpha;
       alpha_beta = alpha * beta;
       
-      amarg_A = amarg_B = amarg_E = 0.0;
+      amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
       for (unsigned int k = 0; k < nsn; ++k) {
 	diffmag = sne[k].mag - dl[k] + alpha * (sne[k].widthpar-1)
 	  - beta * sne[k].colourpar - scriptm0;
@@ -2514,22 +2542,32 @@ void cosfitter::calcLikelihood_la( cosgrid1D& likelihoodtarg ) const {
           - 2.0 * alpha_beta * sne[k].cov_widthpar_colourpar;
 	curr_invvar = 1.0 / error_sq;
 
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-	amarg_E += curr_invvar;
+	steege = diffmag * curr_invvar;
+	steege2 = A1[k];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Note amarg_D=0 if V is diagonal
+	  steege2 = A2[k];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
       chisq = amarg_A + log(amarg_E * inv_twopi) 
 	- amarg_B * amarg_B / amarg_E;
+      if (has_A2) 
+	chisq += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
       likelihoodtarg[i] = exp( -0.5 * chisq + halfchi0 );
     }
   } else {
     //No beta at all
-    double alpha, alpha_sq;
-    double amarg_A, amarg_B, diffmag, error_sq, curr_invvar, chisq;
+    double alpha, alpha_sq, steege, steege2;
+    double amarg_A, amarg_B, amarg_C, diffmag, error_sq, curr_invvar, chisq;
     for (unsigned int i=0; i < likelihoodtarg.getAxisN(); ++i) {
       alpha = likelihoodtarg.getAxisVal(i);
       alpha_sq = alpha*alpha;
-      amarg_A = amarg_B = amarg_E = 0.0;
+      amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
       for (unsigned int k = 0; k < nsn; ++k) {
 	diffmag = sne[k].mag - dl[k] + alpha * (sne[k].widthpar-1)
 	  - scriptm0;
@@ -2537,12 +2575,23 @@ void cosfitter::calcLikelihood_la( cosgrid1D& likelihoodtarg ) const {
           + alpha_sq * sne[k].var_widthpar
           + 2.0 * alpha * sne[k].cov_mag_widthpar;
 	curr_invvar = 1.0 / error_sq;
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-	amarg_E += curr_invvar;
+
+	steege = diffmag * curr_invvar;
+	steege2 = A1[k];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Amarg_D = 0 for diagonal V
+	  steege2 = A2[k];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
       chisq = amarg_A + log(amarg_E * inv_twopi) 
 	- amarg_B * amarg_B / amarg_E;
+      if (has_A2)
+	chisq += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
       likelihoodtarg[i] = exp( -0.5 * chisq + halfchi0 );
     }
   }
@@ -2590,14 +2639,15 @@ void cosfitter::calcLikelihood_lb( cosgrid1D& likelihoodtarg ) const {
 			    "Non fixed alpha value",4);
     
     double alpha, beta, alpha_beta, alpha_sq, beta_sq, chisq;
-    double amarg_A, amarg_B, diffmag, error_sq, curr_invvar;
+    double steege, steege2;
+    double amarg_A, amarg_B, amarg_C, diffmag, error_sq, curr_invvar;
     alpha = it->second.fixval; 
     alpha_sq = alpha*alpha;
     for (unsigned int i=0; i < likelihoodtarg.getAxisN(); ++i) {
       beta = likelihoodtarg.getAxisVal(i);
       beta_sq = beta*beta;
       alpha_beta = alpha * beta;
-      amarg_A = amarg_B = amarg_E = 0.0;
+      amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
       for (unsigned int k = 0; k < nsn; ++k) {
 	diffmag = sne[k].mag - dl[k] + alpha * (sne[k].widthpar-1)
 	  - beta * sne[k].colourpar - scriptm0;
@@ -2607,23 +2657,33 @@ void cosfitter::calcLikelihood_lb( cosgrid1D& likelihoodtarg ) const {
           - 2.0 * alpha_beta * sne[k].cov_widthpar_colourpar;
 	curr_invvar = 1.0 / error_sq;
 
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-	amarg_E += curr_invvar;
+	steege = diffmag * curr_invvar;
+	steege2 = A1[k];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //amarg_D = 0 if V diagonal
+	  steege2 = A2[k];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
       chisq = amarg_A + log(amarg_E * inv_twopi) 
 	- amarg_B * amarg_B / amarg_E;
+      if (has_A2)
+	chisq += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
       likelihoodtarg[i] = exp( -0.5 * chisq + halfchi0 );
 
     }
   } else {
     //No alpha at all
-    double beta, beta_sq;
-    double amarg_A, amarg_B, diffmag, error_sq, curr_invvar, chisq;
+    double beta, beta_sq, steege, steege2;
+    double amarg_A, amarg_B, amarg_C, diffmag, error_sq, curr_invvar, chisq;
     for (unsigned int i=0; i < likelihoodtarg.getAxisN(); ++i) {
       beta = likelihoodtarg.getAxisVal(i);
       beta_sq = beta*beta;
-      amarg_A = amarg_B = amarg_E = 0.0;
+      amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
       for (unsigned int k = 0; k < nsn; ++k) {
 	diffmag = sne[k].mag - dl[k] - beta * sne[k].colourpar
 	  - scriptm0;
@@ -2631,12 +2691,23 @@ void cosfitter::calcLikelihood_lb( cosgrid1D& likelihoodtarg ) const {
           + beta_sq * sne[k].var_colourpar
           - 2.0 * beta * sne[k].cov_mag_colourpar;
 	curr_invvar = 1.0 / error_sq;
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-	amarg_E += curr_invvar;
+
+	steege = diffmag * curr_invvar;
+	steege2 = A1[k];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Amarg_D = 0 for diagonal V
+	  steege2 = A2[k];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
       chisq = amarg_A + log(amarg_E * inv_twopi) 
 	- amarg_B * amarg_B / amarg_E;
+      if ( has_A2 )
+	chisq += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
       likelihoodtarg[i] = exp( -0.5 * chisq + halfchi0 );
     }
   }
@@ -2677,8 +2748,8 @@ double cosfitter::calcLikelihood() const {
   std::map< param_tags::paramcodes, param_struct >::const_iterator itbeta;
   italpha = fparam.params.find( param_tags::alpha );
   itbeta = fparam.params.find( param_tags::beta );
-  double amarg_A, amarg_B, diffmag;
-  amarg_A = amarg_B = 0.0;
+  double amarg_A, amarg_B, amarg_C, diffmag, steege, steege2;
+  amarg_A = amarg_B = amarg_C = amarg_D = amarg_E = amarg_F = 0.0;
   if ( italpha != fparam.params.end() ) {
     if ( italpha->second.fit != param_struct::fixed ) 
       throw CosFitterExcept("cosfitter","calcLikelihood",
@@ -2694,17 +2765,35 @@ double cosfitter::calcLikelihood() const {
 	diffmag = sne[i].mag - dl[i] + alpha * (sne[i].widthpar-1)
 	  - beta * sne[i].colourpar - scriptm0;
 	curr_invvar = 1.0 / pre_vars[i]; //Remember -- already includes al,beta
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
+	steege = diffmag * curr_invvar;
+	steege2 = A1[i];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Amarg_D = 0 for diagonal V
+	  steege2 = A2[i];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
       }
     } else {
       //Alpha, no beta
-       for (unsigned int i=0; i < nsn; ++i) {
+      for (unsigned int i=0; i < nsn; ++i) {
 	diffmag = sne[i].mag - dl[i] + alpha * (sne[i].widthpar-1) - scriptm0;
 	curr_invvar = 1.0 / pre_vars[i]; //Remember -- already includes al,beta
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
-       }
+	steege = diffmag * curr_invvar;
+	steege2 = A1[i];
+	amarg_A += diffmag * steege;
+	amarg_B += steege * steege2;
+	amarg_E += curr_invvar * steege2;
+	if (has_A2) {
+	  //Amarg_D = 0 for diagonal V
+	  steege2 = A2[i];
+	  amarg_C += steege * steege2;
+	  amarg_F += curr_invvar * steege2;
+	}
+      }
     }
   } else if ( itbeta != fparam.params.end() ) {
     //Beta, no alpha
@@ -2714,26 +2803,42 @@ double cosfitter::calcLikelihood() const {
     double beta = itbeta->second.fixval;
     for (unsigned int i=0; i < nsn; ++i) {
       diffmag = sne[i].mag - dl[i] - beta * sne[i].colourpar - scriptm0;
-	curr_invvar = 1.0 / pre_vars[i]; //Remember -- already includes beta
-	amarg_A += diffmag * diffmag * curr_invvar;
-	amarg_B += diffmag * curr_invvar;
+      curr_invvar = 1.0 / pre_vars[i]; //Remember -- already includes beta
+      steege = diffmag * curr_invvar;
+      steege2 = A1[i];
+      amarg_A += diffmag * steege;
+      amarg_B += steege * steege2;
+      amarg_E += curr_invvar * steege2;
+      if (has_A2) {
+	//Amarg_D = 0 for diagonal V
+	steege2 = A2[i];
+	amarg_C += steege * steege2;
+	amarg_F += curr_invvar * steege2;
+      }
     }
   } else {
     //Finally, truly no alpha or beta
     for (unsigned int i=0; i < nsn; ++i) {
       diffmag = sne[i].mag - dl[i] - scriptm0;
       curr_invvar = 1.0 / pre_vars[i]; 
-      amarg_A += diffmag * diffmag * curr_invvar;
-      amarg_B += diffmag * curr_invvar;
+      steege = diffmag * curr_invvar;
+      steege2 = A1[i];
+      amarg_A += diffmag * steege;
+      amarg_B += steege * steege2;
+      amarg_E += curr_invvar * steege2;
+      if (has_A2) {
+	//Amarg_D = 0 for diagonal V
+	steege2 = A2[i];
+	amarg_C += steege * steege2;
+	amarg_F += curr_invvar * steege2;
+      }
     }
   }
 
   double chi2 = amarg_A + log(amarg_E * inv_twopi) 
     - amarg_B * amarg_B / amarg_E;
-
-  //std::cout << amarg_A << " " << amarg_E << " " << amarg_B << 
-  // " chisq: " << chi2 << std::endl;
-
+  if (has_A2)
+    chi2 += log(amarg_F * inv_twopi) - amarg_C*amarg_C / amarg_F;
 
   return exp( -0.5 * chi2 + halfchi0 );
 }
@@ -2823,26 +2928,44 @@ double cosfitter::calcLikelihood_nondia( double alpha, double beta,
   //Then do the non matrix prod part, prod is nsn by ncosmo (nsn,n0)
   //The result should be a vector which is ncosmo long with the
   // chisqs
-  double amarg_A, amarg_B;
+  double amarg_A, amarg_B, amarg_C, amarg_G;
   double chisq, halfchi0;
+  amarg_C = 0.0;
   halfchi0 = 0.5 * static_cast<double>(nsn);
   if (lar.isGood() == 0) {
     amarg_A = diffarr[0] * prod[0];
     for (unsigned int i = 1; i < nsn; ++i )
       amarg_A += diffarr[i] * prod[i];
-    amarg_B = diffarr[0] * invcovmatrix_rowsums[0];
+    amarg_B = diffarr[0] * invcovmatrix_A1[0];
     for (unsigned int i = 1; i < nsn; ++i )
-      amarg_B += diffarr[i] * invcovmatrix_rowsums[i];
-    chisq = amarg_A + log( amarg_E * inv_twopi ) - 
-      amarg_B*amarg_B/amarg_E;
+      amarg_B += diffarr[i] * invcovmatrix_A1[i];
+    if (has_A2) {
+      amarg_C = diffarr[0] * invcovmatrix_A2[0];
+      for (unsigned int i = 1; i < nsn; ++i )
+	amarg_C += diffarr[i] * invcovmatrix_A2[i];
+    }
+
+    if ( !has_A2 ) {
+      chisq = amarg_A + log( amarg_E * inv_twopi ) - 
+	amarg_B*amarg_B/amarg_E;
+    } else {
+      amarg_G = amarg_F - amarg_D*amarg_D/amarg_E;
+      if (amarg_G <= 0)
+	throw CosFitterExcept("cosfitter","calcLikelihood_nondia",
+			      "Invalid marginalized product",1);
+      chisq = amarg_A + log( amarg_E * inv_twopi ) +
+	log( amarg_G * inv_twopi )
+	- amarg_C*amarg_C / amarg_G
+	- amarg_B*amarg_B* amarg_F / (amarg_E * amarg_G)
+	+ 2.0*amarg_B*amarg_C*amarg_D/(amarg_E*amarg_G);
+    }
+
     likelihood = exp( -0.5 * chisq + halfchi0 );
   } else likelihood = 0.0;
 
   return likelihood;
 
 }
-
-
 
 /*!
   This handles the non-diagonal 1D case, and is overloaded with
@@ -2954,8 +3077,9 @@ void cosfitter::calcLikelihood_nondia( cosgrid1D& likelihoodtarg, double alpha,
   //Then do the non matrix prod part, prod is nsn by ncosmo (nsn,n0)
   //The result should be a vector which is ncosmo long with the
   // chisqs
-  double amarg_A, amarg_B;
+  double amarg_A, amarg_B, amarg_C, amarg_G;
   double chisq, halfchi0;
+  amarg_C = 0.0;
   halfchi0 = 0.5 * static_cast<double>(nsn);
   for (unsigned int j = 0; j < n0; ++j) {
     if (lar.isGood(j) == 0) {
@@ -2964,11 +3088,30 @@ void cosfitter::calcLikelihood_nondia( cosgrid1D& likelihoodtarg, double alpha,
       amarg_A = diffptr[0]*prodptr[0];
       for (unsigned int i = 1; i < nsn; ++i )
 	amarg_A += diffptr[i] * prodptr[i];
-      amarg_B = diffptr[0] * invcovmatrix_rowsums[0];
+      amarg_B = diffptr[0] * invcovmatrix_A1[0];
       for (unsigned int i = 1; i < nsn; ++i )
-	amarg_B += diffptr[i] * invcovmatrix_rowsums[i];
-      chisq = amarg_A + log( amarg_E * inv_twopi ) - 
-	amarg_B*amarg_B/amarg_E;
+	amarg_B += diffptr[i] * invcovmatrix_A1[i];
+      if (has_A2) {
+	amarg_C = diffptr[0] * invcovmatrix_A2[0];
+	for (unsigned int i = 1; i < nsn; ++i )
+	  amarg_C += diffptr[i] * invcovmatrix_A2[i];
+      }
+
+      if ( !has_A2 ) {
+	chisq = amarg_A + log( amarg_E * inv_twopi ) - 
+	  amarg_B*amarg_B/amarg_E;
+      } else {
+	amarg_G = amarg_F - amarg_D*amarg_D/amarg_E;
+	if (amarg_G <= 0)
+	  throw CosFitterExcept("cosfitter","calcLikelihood_nondia",
+				"Invalid marginalized product",1);
+	chisq = amarg_A + log( amarg_E * inv_twopi ) +
+	  log( amarg_G * inv_twopi )
+	  - amarg_C*amarg_C / amarg_G
+	  - amarg_B*amarg_B* amarg_F / (amarg_E * amarg_G)
+	  + 2.0*amarg_B*amarg_C*amarg_D/(amarg_E*amarg_G);
+      }
+
       likelihoodtarg[j] = exp( -0.5 * chisq + halfchi0 );
     } else likelihoodtarg[j] = 0.0;
   }
@@ -3093,8 +3236,9 @@ void cosfitter::calcLikelihood_nondia( cosgrid2D& likelihoodtarg, double alpha,
     //Then do the non matrix prod part, prod is nsn by ncosmo (nsn,n1)
     //The result should be a vector which is ncosmo long with the
     // chisqs
-    double amarg_A, amarg_B;
+    double amarg_A, amarg_B, amarg_C, amarg_G;
     double chisq, halfchi0;
+    amarg_C = 0.0;
     halfchi0 = 0.5 * static_cast<double>(nsn);
     for (unsigned int j = 0; j < n1; ++j) {
       if (lar.isGood(i,j) == 0) {
@@ -3103,11 +3247,30 @@ void cosfitter::calcLikelihood_nondia( cosgrid2D& likelihoodtarg, double alpha,
 	amarg_A = diffptr[0] * prodptr[0];
 	for (unsigned int k = 1; k < nsn; ++k )
 	  amarg_A += diffptr[k] * prodptr[k];
-	amarg_B = diffptr[0] * invcovmatrix_rowsums[0];
+	amarg_B = diffptr[0] * invcovmatrix_A1[0];
 	for (unsigned int k = 1; k < nsn; ++k )
-	  amarg_B += diffptr[k] * invcovmatrix_rowsums[k];
-	chisq = amarg_A + log( amarg_E * inv_twopi ) - 
-	  amarg_B*amarg_B/amarg_E;
+	  amarg_B += diffptr[k] * invcovmatrix_A1[k];
+	if (has_A2) {
+	  amarg_C = diffptr[0] * invcovmatrix_A2[0];
+	  for (unsigned int k = 1; k < nsn; ++k )
+	    amarg_C += diffptr[k] * invcovmatrix_A2[k];
+	}
+
+	if ( !has_A2 ) {
+	  chisq = amarg_A + log( amarg_E * inv_twopi ) - 
+	    amarg_B*amarg_B/amarg_E;
+	} else {
+	  amarg_G = amarg_F - amarg_D*amarg_D/amarg_E;
+	  if (amarg_G <= 0)
+	    throw CosFitterExcept("cosfitter","calcLikelihood_nondia",
+				  "Invalid marginalized product",1);
+	  chisq = amarg_A + log( amarg_E * inv_twopi ) +
+	    log( amarg_G * inv_twopi )
+	    - amarg_C*amarg_C / amarg_G
+	    - amarg_B*amarg_B* amarg_F / (amarg_E * amarg_G)
+	    + 2.0*amarg_B*amarg_C*amarg_D/(amarg_E*amarg_G);
+	}
+
 	likelihoodtarg[i][j] = exp( -0.5 * chisq + halfchi0 );
       } else likelihoodtarg[i][j] = 0.0;
     }
@@ -3235,7 +3398,8 @@ void cosfitter::calcLikelihood_nondia( cosgrid3D& likelihoodtarg, double alpha,
       //Then do the non matrix prod part, prod is nsn by ncosmo (nsn,n1)
       //The result should be a vector which is ncosmo long with the
       // chisqs
-      double amarg_A, amarg_B;
+      double amarg_A, amarg_B, amarg_C, amarg_G;
+      amarg_C = 0.0;
       for (unsigned int k = 0; k < n2; ++k) {
 	if (lar.isGood(i,j,k) == 0) {
 	  diffptr = diffarr + k * nsn;
@@ -3243,11 +3407,30 @@ void cosfitter::calcLikelihood_nondia( cosgrid3D& likelihoodtarg, double alpha,
 	  amarg_A = diffptr[0] * prodptr[0];
 	  for (unsigned int m = 1; m < nsn; ++m )
 	    amarg_A += diffptr[m] * prodptr[m];
-	  amarg_B = diffptr[0] * invcovmatrix_rowsums[0];
+	  amarg_B = diffptr[0] * invcovmatrix_A1[0];
 	  for (unsigned int m = 1; m < nsn; ++m )
-	    amarg_B += diffptr[m] * invcovmatrix_rowsums[m];
-	  chisq = amarg_A + log( amarg_E * inv_twopi ) - 
-	    amarg_B*amarg_B/amarg_E;
+	    amarg_B += diffptr[m] * invcovmatrix_A1[m];
+	  if (has_A2) {
+	    amarg_C = diffptr[0] * invcovmatrix_A2[0];
+	    for (unsigned int m = 1; m < nsn; ++m )
+	      amarg_C += diffptr[m] * invcovmatrix_A2[m];
+	  }
+
+	  if ( !has_A2 ) {
+	    chisq = amarg_A + log( amarg_E * inv_twopi ) - 
+	      amarg_B*amarg_B/amarg_E;
+	  } else {
+	    amarg_G = amarg_F - amarg_D*amarg_D/amarg_E;
+	    if (amarg_G <= 0)
+	      throw CosFitterExcept("cosfitter","calcLikelihood_nondia",
+				    "Invalid marginalized product",1);
+	    chisq = amarg_A + log( amarg_E * inv_twopi ) +
+	      log( amarg_G * inv_twopi )
+	      - amarg_C*amarg_C / amarg_G
+	      - amarg_B*amarg_B* amarg_F / (amarg_E * amarg_G)
+	      + 2.0*amarg_B*amarg_C*amarg_D/(amarg_E*amarg_G);
+	  }
+
 	  likelihoodtarg[i][j][k] = exp( -0.5 * chisq + halfchi0 );
 	} else likelihoodtarg[i][j][k] = 0.0;
       }
@@ -3273,7 +3456,7 @@ void cosfitter::indivchi( const std::map< param_tags::paramcodes,
   std::map< param_tags::paramcodes, param_results >::const_iterator it;
 
   //Grab the params
-  double w0, wa, om, ode, alpha, beta, scriptm;
+  double w0, wa, om, ode, alpha, beta, scriptm1, scriptm2;
   it = results_map.find( param_tags::w0 );
   if ( it != results_map.end() ) w0 = it->second.getVal(); else w0 = -1.0;
   it = results_map.find( param_tags::wa );
@@ -3289,9 +3472,12 @@ void cosfitter::indivchi( const std::map< param_tags::paramcodes,
   it = results_map.find( param_tags::beta );
   if ( it != results_map.end() ) beta = it->second.getVal(); else 
     beta = 0.0;
-  it = results_map.find( param_tags::scriptm );
-  if ( it != results_map.end() ) scriptm = it->second.getVal(); else 
-    scriptm = 0.0;
+  it = results_map.find( param_tags::scriptm1 );
+  if ( it != results_map.end() ) scriptm1 = it->second.getVal(); else 
+    scriptm1 = 0.0;
+  it = results_map.find( param_tags::scriptm2 );
+  if ( it != results_map.end() ) scriptm2 = it->second.getVal(); else 
+    scriptm2 = 0.0;
 
   lm.getLumDist( sne, dl, om, ode, w0, wa );
 
@@ -3299,7 +3485,8 @@ void cosfitter::indivchi( const std::map< param_tags::paramcodes,
 
   printf("For parameters\n");
   printf(" w0: %6.3f wa: %6.3f Om: %6.3f Ol: %6.3f\n", w0, wa, om, ode);
-  printf(" alpha: %6.3f beta: %6.3f scriptM: %6.3f\n", alpha, beta, scriptm);
+  printf(" alpha: %6.3f beta: %6.3f\n", alpha, beta);
+  printf(" scriptm1: %6.3f scritpm2: %6.3f\n", scriptm1, scriptm2);
   if (fparam.usekomatsuform) 
     printf("Using Komatsu w(a) form with atrans: %6.4f\n",fparam.atrans);
   if (!sne.areErrorsDiagonal())
@@ -3317,7 +3504,8 @@ void cosfitter::indivchi( const std::map< param_tags::paramcodes,
 
   for (unsigned int i = 0; i < nsn; ++i) {
     fitmag = dl[i] - ( alpha*(sne[i].widthpar-1.0) ) 
-      + ( beta*sne[i].colourpar ) + scriptm;
+      + ( beta*sne[i].colourpar ) + scriptm1*A1[i];
+    if (has_A2) fitmag += scriptm2*A2[i];
 
     pos = intrinsic.find( sne[i].dataset );
     if (pos == intrinsic.end()) {
@@ -3384,7 +3572,7 @@ void cosfitter::print_results( std::ostream& outstream,
   }
 
   //Grab the params
-  double w0, wa, om, ode, alpha, beta, scriptm;
+  double w0, wa, om, ode, alpha, beta, scriptm1, scriptm2;
   it = results_map.find( param_tags::w0 );
   if ( it != results_map.end() ) w0 = it->second.getVal(); else w0 = -1.0;
   it = results_map.find( param_tags::wa );
@@ -3400,9 +3588,12 @@ void cosfitter::print_results( std::ostream& outstream,
   it = results_map.find( param_tags::beta );
   if ( it != results_map.end() ) beta = it->second.getVal(); else 
     beta = 0.0;
-  it = results_map.find( param_tags::scriptm );
-  if ( it != results_map.end() ) scriptm = it->second.getVal(); else 
-    scriptm = 0.0;
+  it = results_map.find( param_tags::scriptm1 );
+  if ( it != results_map.end() ) scriptm1 = it->second.getVal(); else 
+    scriptm1 = 0.0;
+  it = results_map.find( param_tags::scriptm2 );
+  if ( it != results_map.end() ) scriptm2 = it->second.getVal(); else 
+    scriptm2 = 0.0;
 
   lm.getLumDist( sne, dl, om, ode, w0, wa );
 
@@ -3416,7 +3607,8 @@ void cosfitter::print_results( std::ostream& outstream,
   outstream << "wa: " << std::setprecision(3) << wa << std::endl;
   outstream << "Om: " << std::setprecision(4) << om << std::endl;
   outstream << "Ode: " << std::setprecision(4) << ode << std::endl;
-  outstream << "Sm: " << std::setprecision(5) << scriptm << std::endl;
+  outstream << "Sm1: " << std::setprecision(5) << scriptm1 << std::endl;
+  outstream << "Sm2: " << std::setprecision(5) << scriptm2 << std::endl;
   outstream << "Alpha: "  << std::setprecision(5) << alpha << std::endl;
   outstream << "Beta: " << std::setprecision(5) << beta << std::endl;
   if (fparam.nintrinsicdisp == 0) {
@@ -3444,14 +3636,15 @@ void cosfitter::print_results( std::ostream& outstream,
     setw(8) << "colour" << setw(8) << "dcolour" << setw(4) <<
     "set" << std::endl;
   
-  double rms;
+  double rms, dli;
   double dzerrsq, dmag, chisqcurr, corr;
   totchisq = 0.0;
   rms = 0.0;
   for (unsigned int i = 0; i < nsn; ++i) {
     corr = ( -alpha * (sne[i].widthpar-1.0) ) + 
       ( beta * sne[i].colourpar );
-    fitmag = dl[i] + corr + scriptm;
+    fitmag = dl[i] + corr + scriptm1 * A1[i];
+    if (has_A2) fitmag += scriptm2 * A2[i];
 
     emptyfac = (1.0+sne[i].zcmb)/(sne[i].zcmb*(1+0.5*sne[i].zcmb));
     dzerrsq = fparam.pecz * fparam.pecz + sne[i].var_z;
@@ -3478,13 +3671,15 @@ void cosfitter::print_results( std::ostream& outstream,
     chisqcurr = dmag*dmag/varcurr;
     totchisq += chisqcurr;
 
+    dli = dl[i] + scriptm1*A1[i];
+    if (has_A2) dli += scriptm2*A2[i];
     outstream << std::fixed << std::left << std::setw(9) <<
       sne[i].name << std::right << 
       std::setw(7) << std::setprecision(3) << sne[i].zcmb << 
       std::setw(7) << std::setprecision(3) << sne[i].zhel <<
       std::setw(9) << std::setprecision(3) << sne[i].mag << 
       std::setw(7) << std::setprecision(3) << sqrt(sne[i].var_mag) << 
-      std::setw(8) << std::setprecision(3) << dl[i]+scriptm << 
+      std::setw(8) << std::setprecision(3) << dli <<
       std::setw(8) << std::setprecision(3) << corr <<
       std::setw(8) << std::setprecision(3) << fitmag <<
       std::setw(7) << std::setprecision(3) << sqrt(varcurr) << 
@@ -3543,7 +3738,9 @@ cosfitter::write_paramsummary(const std::map< param_tags::paramcodes,
   if ( it != results_map.end() )  ofs << it->second << std::endl;
   it = results_map.find( param_tags::beta );
   if ( it != results_map.end() )  ofs << it->second << std::endl;
-  it = results_map.find( param_tags::scriptm );
+  it = results_map.find( param_tags::scriptm1 );
+  if ( it != results_map.end() )  ofs << it->second << std::endl;
+  it = results_map.find( param_tags::scriptm2 );
   if ( it != results_map.end() )  ofs << it->second << std::endl;
 
   ofs.close();
@@ -3552,12 +3749,13 @@ cosfitter::write_paramsummary(const std::map< param_tags::paramcodes,
 
 /*!
   \param[in] results_map Results of cosmological fit
-  \return The estimate of \f${\mathcal M}\f$ given the other parameters.
+  \return The estimates of \f${\mathcal M}\f$ given the other parameters.
  */
-double cosfitter::estimate_scriptm( const std::map< param_tags::paramcodes, 
+std::pair<double,double> 
+cosfitter::estimate_scriptm( const std::map< param_tags::paramcodes, 
 				    param_results >& results_map ) const {
   //Grab the parameter values
-  double w0, wa, om, ode, alpha, beta, scriptm;
+  double w0, wa, om, ode, alpha, beta;
   std::map< param_tags::paramcodes, param_results >::const_iterator it;
   it = results_map.find( param_tags::w0 );
   if ( it != results_map.end() ) w0 = it->second.getVal(); else w0 = -1.0;
@@ -3574,24 +3772,28 @@ double cosfitter::estimate_scriptm( const std::map< param_tags::paramcodes,
   it = results_map.find( param_tags::beta );
   if ( it != results_map.end() ) beta = it->second.getVal(); else 
     beta = 0.0;
-  it = results_map.find( param_tags::scriptm );
-  if ( it != results_map.end() ) scriptm = it->second.getVal(); else 
-    scriptm = 0.0;
 
   lm.getLumDist( sne, dl, om, ode, w0, wa );
 
   if ( sne.areErrorsDiagonal() ) {
-    double fitmag, invvar, wt, wtmean;
-    wt = 0.0;
-    wtmean = 0.0;
+    double fitmag, invvar, wt1, wt2, wtmean1, wtmean2;
+    wt1 = wt2 = wtmean1 = wtmean2 = 0.0;
     if ( fparam.errsfixed ) {
       for (unsigned int i = 0; i < nsn; ++i) {
 	fitmag = dl[i]
 	  - ( alpha*(sne[i].widthpar-1) )
 	  + ( beta*sne[i].colourpar );
 	invvar = 1.0 / pre_vars[i];
-	wt += invvar;
-	wtmean += (sne[i].mag - fitmag) * invvar;
+	switch (sne[i].scriptmset) {
+	case 1 :
+	  wt1 += invvar;
+	  wtmean1 += (sne[i].mag - fitmag) * invvar;
+	  break;
+	case 2 :
+	  wt2 += invvar;
+	  wtmean2 += (sne[i].mag - fitmag) * invvar;
+	  break;
+	}
       }
     } else {
       for (unsigned int i = 0; i < nsn; ++i) {
@@ -3615,21 +3817,41 @@ double cosfitter::estimate_scriptm( const std::map< param_tags::paramcodes,
 			  - (2.0*beta*sne[i].cov_mag_colourpar) 
 			  - (2.0*alpha*beta*sne[i].cov_widthpar_colourpar) );
 	}
-	wt += invvar;
-	wtmean += (sne[i].mag - fitmag) * invvar;
+	switch (sne[i].scriptmset) {
+	case 1 :
+	  wt1 += invvar;
+	  wtmean1 += (sne[i].mag - fitmag) * invvar;
+	  break;
+	case 2 :
+	  wt2 += invvar;
+	  wtmean2 += (sne[i].mag - fitmag) * invvar;
+	  break;
+	}
       }
     }
-    return wtmean / wt;
+    if (has_A2)
+      return std::pair<double,double>(wtmean1/wt1,wtmean2/wt2);
+    else
+      return std::pair<double,double>(wtmean1/wt1,0.0);
   } else {
     if (!fparam.errsfixed) computeInvCovMatrix( alpha, beta );
-    double diffmag, amarg_B;  //amarg_E computed by computeInvCovMatrix
-    amarg_B = 0.0;
+    double diffmag, amarg_B, amarg_C;
+    amarg_B = amarg_C = 0.0;
     for (unsigned int i = 0; i < nsn; ++i) {
       diffmag = sne[i].mag - dl[i] + alpha * (sne[i].widthpar-1)
 	- beta * sne[i].colourpar;
-      amarg_B += diffmag * invcovmatrix_rowsums[i];
+      amarg_B += diffmag * invcovmatrix_A1[i];
+      if (has_A2)
+	amarg_C += diffmag * invcovmatrix_A2[i];
     }
-    return amarg_B / amarg_E;
+    if (has_A2) {
+      double amarg_J = amarg_E * amarg_F - amarg_D*amarg_D;
+      return std::pair<double,double>( (amarg_B*amarg_F-amarg_C*amarg_D)/
+				       amarg_J,
+				       (amarg_C*amarg_E - amarg_B*amarg_D)/
+				       amarg_J);
+    } else
+      return std::pair<double,double>(amarg_B / amarg_E, 0.0);
   }
 } 
 
@@ -3653,8 +3875,40 @@ void cosfitter::prep(const std::string& paramfile) {
   
   sne.setName("Supernova");
   sne.readData( fparam.datafilename );
+  sne.setScriptmSet( fparam.scriptmcut );
 
   nsn = sne.size();
+
+  //Set up A1, A2
+  A1.resize(nsn);
+  A2.resize(nsn);
+  bool has_A1 = false;
+  has_A2 = false;
+  invcovmatrix_A1.reserve(nsn);
+  invcovmatrix_A2.reserve(nsn);
+  for (unsigned int i = 0; i < nsn; ++i)
+    switch (sne[i].scriptmset) {
+    case 1 :
+      A1[i] = 1.0; A2[i] = 0.0; has_A1=true;
+      break;
+    case 2 :
+      A1[i] = 0.0; A2[i] = 1.0; has_A2=true;
+      break;
+    default :
+      throw CosFitterExcept("cosfitter","prep","Unknown scriptmset",8);
+      break;
+    }
+  if (! has_A1) {
+    if (!has_A2)
+      throw CosFitterExcept("cosfitter","prep",
+			    "Must have some SNe in one of the sets",16);
+    //Otherwise swap
+    for (unsigned int i = 0; i < nsn; ++i) {
+      A1[i] = A2[i];
+      A2[i] = 0.0;
+      has_A2 = false;
+    }
+  }
 
   //Handle reading full style cov matrix
   if ( fparam.mag_covfileset || fparam.width_covfileset || 
@@ -3683,7 +3937,7 @@ void cosfitter::prep(const std::string& paramfile) {
 			     fparam.woodburyb_covfilename );
     if ( sne.getWoodburyCovMatrixSNeRef().getNsn() != nsn ) 
       throw CosFitterExcept("cosfitter","prep",
-			    "Woodbury covmatrix not same size as SN data",8);
+			    "Woodbury covmatrix not same size as SN data",32);
   }  
 
   sne.zcmbsort(); 
@@ -3749,15 +4003,21 @@ void cosfitter::dofit() const {
   }
 
   //Add scriptm
-  double sm = estimate_scriptm( results_map );
+  std::pair<double,double> sm = estimate_scriptm( results_map );
   param_results sm_param;
-  sm_param.name = param_tags::scriptmtag;
-  sm_param.value = sm;
-  sm_param.mostlikelyval = sm;
+  sm_param.name = param_tags::scriptm1tag;
+  sm_param.value = sm.first;
+  sm_param.mostlikelyval = sm.first;
   sm_param.fit = param_struct::analytic;
-  sm_param.spec.first = param_tags::scriptm;
+  sm_param.spec.first = param_tags::scriptm1;
   sm_param.spec.second = param_tags::nuisance;
-  results_map[ param_tags::scriptm ] = sm_param;
+  results_map[ param_tags::scriptm1 ] = sm_param;
+  sm_param.name = param_tags::scriptm2tag;
+  sm_param.value = sm.second;
+  sm_param.mostlikelyval = sm.second;
+  sm_param.spec.first = param_tags::scriptm2;
+  results_map[ param_tags::scriptm2 ] = sm_param;
+
 
   //Verbosity stuff
   if (fparam.paramsummary)

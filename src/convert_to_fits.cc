@@ -228,14 +228,17 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("OMTYPE"),keyval,
 		      const_cast<char*>("Type of Omega_m fit"),
 		      &status );
+      ftmp = it->second.min;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MINOM"), 
-		      &it->second.min, const_cast<char*>("Min Omega_m"), 
+		      &ftmp, const_cast<char*>("Min Omega_m"), 
 		      &status );
+      ftmp = it->second.max;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MAXOM"), 
-		      &it->second.max, const_cast<char*>("Max Omega_m"), 
+		      &ftmp, const_cast<char*>("Max Omega_m"), 
 		      &status );
+      ftmp = it->second.dval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("DOM"), 
-		      &it->second.dval, const_cast<char*>("Delta Omega_m"), 
+		      &ftmp, const_cast<char*>("Delta Omega_m"), 
 		      &status );
       itmp = static_cast<int>(it->second.n);
       fits_write_key( fp, TINT, const_cast<char*>("NOM"), &itmp, 
@@ -247,8 +250,9 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("OMTYPE"),keyval,
 		      const_cast<char*>("Type of Omega_m fit"),
 		      &status );
+      ftmp=it->second.fixval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("OMVAL"), 
-		      &it->second.fixval,
+		      &ftmp,
 		      const_cast<char*>("Fixed Omega_m"), &status );
       break;
     default :
@@ -275,13 +279,16 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("ODETYPE"),keyval,
 		      const_cast<char*>("Type of Omega_DE fit"),
 		      &status );
+      ftmp = it->second.min;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MINODE"), 
-		      &it->second.min, const_cast<char*>("Min Omega_DE"), 
+		      &ftmp, const_cast<char*>("Min Omega_DE"), 
 		      &status );
-      fits_write_key( fp, TFLOAT, const_cast<char*>("MAXODE"), &it->second.max,
+      ftmp = it->second.max;
+      fits_write_key( fp, TFLOAT, const_cast<char*>("MAXODE"), &ftmp,
 		      const_cast<char*>("Max Omega_DE"), 
 		      &status );
-      fits_write_key( fp, TFLOAT, const_cast<char*>("DODE"), &it->second.dval, 
+      ftmp = it->second.dval;
+      fits_write_key( fp, TFLOAT, const_cast<char*>("DODE"), &ftmp, 
 		      const_cast<char*>("Delta Omega_DE"), 
 		      &status );
       itmp = static_cast<int>(it->second.n);
@@ -294,8 +301,9 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("ODETYPE"),keyval,
 		      const_cast<char*>("Type of Omega_DE fit"),
 		      &status );
+      ftmp = it->second.fixval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("ODEVAL"), 
-		      &it->second.fixval,
+		      &ftmp,
 		      const_cast<char*>("Fixed Omega_m"), &status );
       break;
     default :
@@ -315,14 +323,17 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("ALPHTYPE"),keyval,
 		      const_cast<char*>("Type of alpha fit"),
 		      &status );
+      ftmp = it->second.min;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MINALPHA"), 
-		      &it->second.min, const_cast<char*>("Min alpha"), 
+		      &ftmp, const_cast<char*>("Min alpha"), 
 		      &status );
+      ftmp = it->second.max;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MAXALPHA"), 
-		      &it->second.max, const_cast<char*>("Max alpha"), 
+		      &ftmp, const_cast<char*>("Max alpha"), 
 		      &status );
-      fits_write_key( fp, TFLOAT, const_cast<char*>("DALPHA"), 
-		      &it->second.dval, const_cast<char*>("Delta alpha"), 
+      ftmp = it->second.dval;
+      fits_write_key( fp, TFLOAT, const_cast<char*>("DALPHA"),
+		      &ftmp, const_cast<char*>("Delta alpha"), 
 		      &status );
       itmp = static_cast<int>(it->second.n);
       fits_write_key( fp, TINT, const_cast<char*>("NALPHA"), &itmp, 
@@ -334,8 +345,9 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("ALPHTYPE"),keyval,
 		      const_cast<char*>("Type of alpha fit"),
 		      &status );
+      ftmp = it->second.fixval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("ALPHAVAL"), 
-		      &it->second.fixval,
+		      &ftmp,
 		      const_cast<char*>("Fixed alpha"), &status );
       break;
     default :
@@ -355,14 +367,17 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("BETATYPE"),keyval,
 		      const_cast<char*>("Type of beta fit"),
 		      &status );
+      ftmp = it->second.min;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MINBETA"), 
-		      &it->second.min, const_cast<char*>("Min beta"), 
+		      &ftmp, const_cast<char*>("Min beta"), 
 		      &status );
+      ftmp = it->second.max;
       fits_write_key( fp, TFLOAT, const_cast<char*>("MAXBETA"), 
-		      &it->second.max, const_cast<char*>("Max beta"), 
+		      &ftmp, const_cast<char*>("Max beta"), 
 		      &status );
+      ftmp = it->second.dval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("DBETA"), 
-		      &it->second.dval, const_cast<char*>("Delta beta"), 
+		      &ftmp, const_cast<char*>("Delta beta"), 
 		      &status );
       itmp = static_cast<int>(it->second.n);
       fits_write_key( fp, TINT, const_cast<char*>("NBETA"), 
@@ -374,8 +389,9 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
       fits_write_key( fp, TSTRING,const_cast<char*>("BETATYPE"),
 		      keyval,const_cast<char*>("Type of beta fit"),
 		      &status );
+      ftmp = it->second.fixval;
       fits_write_key( fp, TFLOAT, const_cast<char*>("BETAVAL"), 
-		      &it->second.fixval,
+		      &ftmp,
 		      const_cast<char*>("Fixed beta"), &status );
       break;
     default :
@@ -388,11 +404,8 @@ int AddFitParams( fitsfile* fp, fitparam& fparam,
 		    &status );
 
   //Other stuff
-  fits_write_key( fp, TFLOAT, const_cast<char*>("SGINT"), 
-		  &fparam.intrinsicdisp,
-		  const_cast<char*>("Intrinsic dispersion (mag)"), &status );
-
-  fits_write_key( fp, TFLOAT, const_cast<char*>("PECZ"), &fparam.pecz,
+  ftmp = fparam.pecz;
+  fits_write_key( fp, TFLOAT, const_cast<char*>("PECZ"), &ftmp,
 		  const_cast<char*>("peculiar velocity in z"), &status );
 
   return status;
@@ -635,13 +648,14 @@ int  AddSNeData( fitsfile* fp, const fitparam& fparam, int& status ) {
   long nsn = static_cast<long>(sne.size());
   
   //Make binary table to hold data
-  int tfields = 17;
+  int tfields = 20;
   const char* ttype[] = { "name", "zcmb", "zhel", "dz", "var_z", "mag", "dmag", 
 			  "var_mag", "width", "dwidth", "var_width", "colour",
-			  "dcolour","var_colour", "cov_m_w", "cov_m_c",
+			  "dcolour","var_colour", "thirdvar", "dthirdvar",
+			  "var_thirdvar", "cov_m_w", "cov_m_c",
 			  "cov_w_c" };
   const char* tform[] = { "12A", "E", "E", "E", "E", "E", "E", "E", "E", "E", 
-			  "E", "E", "E", "E", "E", "E", "E" };
+			  "E", "E", "E", "E", "E", "E", "E", "E", "E", "E" };
 
   fits_create_tbl( fp, BINARY_TBL, nsn, tfields, const_cast<char**>(ttype), 
 		   const_cast<char**>(tform),
@@ -701,14 +715,23 @@ int  AddSNeData( fitsfile* fp, const fitparam& fparam, int& status ) {
   for (long i = 0; i < nsn; ++i) vals[i] = sne[i].var_colourpar;
   fits_write_col( fp, TFLOAT, 14, 1, 1, nsn, vals, &status );
 
-  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_mag_widthpar;
+  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].thirdpar;
   fits_write_col( fp, TFLOAT, 15, 1, 1, nsn, vals, &status );
 
-  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_mag_colourpar;
+  for (long i = 0; i < nsn; ++i) vals[i] = sqrt( sne[i].var_thirdpar );
   fits_write_col( fp, TFLOAT, 16, 1, 1, nsn, vals, &status );
 
-  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_widthpar_colourpar;
+  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].var_thirdpar;
   fits_write_col( fp, TFLOAT, 17, 1, 1, nsn, vals, &status );
+
+  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_mag_widthpar;
+  fits_write_col( fp, TFLOAT, 18, 1, 1, nsn, vals, &status );
+
+  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_mag_colourpar;
+  fits_write_col( fp, TFLOAT, 19, 1, 1, nsn, vals, &status );
+
+  for (long i = 0; i < nsn; ++i) vals[i] = sne[i].cov_widthpar_colourpar;
+  fits_write_col( fp, TFLOAT, 20, 1, 1, nsn, vals, &status );
 
   delete[] vals;
 
@@ -737,7 +760,7 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
   string line;
   vector<string> words;
   stringstream str;
-  float w, wa, om, ode, sm, alpha, beta;
+  float w0, wa, om, ode, sm1, sm2, alpha, beta;
 
   //The first line is the fit type
   getline(fl,line);
@@ -751,21 +774,21 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
   //Next line is ignored
   getline(fl,line);
   
-  //Then the best fit parameters w,om,ode,sm,alpha,beta
+  //Then the best fit parameters w0, wa, ,om,ode,sm1, sm2, alpha, beta
   getline(fl,line);
   utility::stringwords(line,words);
   if (words.size() != 2)
     throw CosFitterExcept("convert_to_fits","AddExtendedData",
-			  "Trouble with w: line",2);
+			  "Trouble with w0: line",2);
   str.str( words[1] );
   str.clear();
-  str >> w;
+  str >> w0;
 
   getline(fl,line);
   utility::stringwords(line,words);
   if (words.size() != 2)
     throw CosFitterExcept("convert_to_fits","AddExtendedData",
-			  "Trouble with wa: line",3);
+			  "Trouble with wa: line",2);
   str.str( words[1] );
   str.clear();
   str >> wa;
@@ -792,10 +815,19 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
   utility::stringwords(line,words);
   if (words.size() != 2)
     throw CosFitterExcept("convert_to_fits","AddExtendedData",
-			  "Trouble with sm: line",6);
+			  "Trouble with sm1: line",6);
   str.str( words[1] );
   str.clear();
-  str >> sm;
+  str >> sm1;
+
+  getline(fl,line);
+  utility::stringwords(line,words);
+  if (words.size() != 2)
+    throw CosFitterExcept("convert_to_fits","AddExtendedData",
+			  "Trouble with sm2: line",6);
+  str.str( words[1] );
+  str.clear();
+  str >> sm2;
 
   getline(fl,line);
   utility::stringwords(line,words);
@@ -815,23 +847,37 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
   str.clear();
   str >> beta;
 
+  //Determine how many intrinsic disp datasets
+  getline(fl,line);
+  utility::stringwords(line,words);
+  if (words.size() == 6) {
+    str.str(words[5]);
+    str.clear();
+    unsigned int ndisp;
+    str >> ndisp;
+    if (ndisp > 0) for (unsigned int i = 0; i < ndisp; ++i)
+		     getline(fl,line);
+  }
+
   //Skip the next two (intrinsicdisp, pecz)
-  getline(fl,line); getline(fl,line);
+  getline(fl,line);
 
   //Then grab the number of SN
   //The line is Number of objects: nsn
   unsigned int nsn;
   getline(fl,line);
   utility::stringwords(line,words);
-  if (words.size() != 4)
+  if (words.size() != 4) {
     throw CosFitterExcept("convert_to_fits","AddExtendedData",
 			  "Trouble with nsn line",2);
+  }
   str.str( words[3] );
   str.clear();
   str >> nsn;
 
 
-  //Skip the header line
+  //Skip the warning and header line
+  getline(fl,line);
   getline(fl,line);
 
   //Allocate the arrays to hold the results
@@ -873,7 +919,7 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
 		   const_cast<char*>("BESTFIT"), &status );
 
   //Add the best fit values as header keywords
-  fits_write_key( fp, TFLOAT, const_cast<char*>("W0BEST"), &w, 
+  fits_write_key( fp, TFLOAT, const_cast<char*>("W0BEST"), &w0, 
 		  const_cast<char*>("w_0 best fit"),
 		  &status );
   fits_write_key( fp, TFLOAT, const_cast<char*>("WABEST"), &wa, 
@@ -885,7 +931,10 @@ int AddExtendedData( fitsfile* fp, const fitparam& fparam, int& status ) {
   fits_write_key( fp, TFLOAT, const_cast<char*>("ODEBEST"), &ode, 
 		  const_cast<char*>("Omega_de best fit"),
 		  &status );
-  fits_write_key( fp, TFLOAT, const_cast<char*>("SMBEST"), &sm, 
+  fits_write_key( fp, TFLOAT, const_cast<char*>("SM1BEST"), &sm1, 
+		  const_cast<char*>("scriptm best fit"),
+		  &status );
+  fits_write_key( fp, TFLOAT, const_cast<char*>("SM2BEST"), &sm2, 
 		  const_cast<char*>("scriptm best fit"),
 		  &status );
   fits_write_key( fp, TFLOAT, const_cast<char*>("ALBEST"), &alpha, 

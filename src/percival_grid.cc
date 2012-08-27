@@ -1,5 +1,5 @@
 //User interface driver for percival BAO parameters
-// possibly also including WMAP7
+// possibly also including WMAP5
 
 #include<cstdlib>
 #include<cmath>
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
       cerr << "\tshould be the desired name of the output file." << std::endl;
       cerr << "OPTIONS" << std::endl;
       cerr << "\t-i, --includewmap" << std::endl;
-      cerr << "\t\tAlso uses the WMAP7 constraints" << std::endl;
+      cerr << "\t\tAlso uses the WMAP5 constraints" << std::endl;
       return 0;
       break;
     case 'i' :
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
   try {
     fparam.readFile( paramfile, true );
     if (includewmap) {
-      auxconstraint::baoP09_wmap7yr_dls bao;
+      auxconstraint::baoP09_wmap5yr_dls bao;
       if (fparam.fixcurv)
 	bao.SetFixCurv( fparam.ocurv );
       if (fparam.usekomatsuform) {

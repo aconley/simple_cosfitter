@@ -110,6 +110,8 @@ struct fitparam {
   bool verbose;  //!< If set, more verbose messages are printed as it runs.
   bool showprogbar; //!< Shows the progress meter
 
+  double scriptmcut; //!< Cut on third parameter to decide which scriptmset
+
   fitparam(); //!< Default constructor.  Sets default values above
 
   void readFile(const std::string& filename, bool silent=false); //!< Reads in from parameter file.
