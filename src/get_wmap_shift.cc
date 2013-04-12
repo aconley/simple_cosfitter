@@ -5,7 +5,7 @@
 #include <getopt.h>
 #include <string>
 
-#include <auxconstraint.h>
+#include "auxconstraint.h"
 
 using namespace std;
 

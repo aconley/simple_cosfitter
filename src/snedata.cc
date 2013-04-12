@@ -7,9 +7,9 @@
 #include <map>
 #include <stdexcept>
 
-#include <utility.h>
-#include <cosfitterexcept.h>
-#include <snedata.h>
+#include "utility.h"
+#include "cosfitterexcept.h"
+#include "snedata.h"
 
 using namespace std;
 

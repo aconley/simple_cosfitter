@@ -1,6 +1,6 @@
 #include <cmath>
 #include <iostream>
-#include <cosfitterexcept.h>
+#include "cosfitterexcept.h"
 
 using namespace std;
 

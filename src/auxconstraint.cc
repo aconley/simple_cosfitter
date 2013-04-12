@@ -8,9 +8,9 @@
 #include<cmath>
 #endif
 
-#include <param_tags.h>
-#include <auxconstraint.h>
-#include <cosfitterexcept.h>
+#include "param_tags.h"
+#include "auxconstraint.h"
+#include "cosfitterexcept.h"
 
 #include <gsl/gsl_errno.h>
 

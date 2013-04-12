@@ -3,8 +3,8 @@
 #include<string>
 #include<getopt.h>
 
-#include <cosgrids.h>
-#include <cosfitterexcept.h>
+#include "cosgrids.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

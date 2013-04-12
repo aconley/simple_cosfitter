@@ -5,11 +5,11 @@
 
 #include <vector>
 
-#include <paramfile.h>
-#include <cosgrids.h>
-#include <snedata.h>
-#include <lumdist.h>
-#include <cosgrids.h>
+#include "paramfile.h"
+#include "cosgrids.h"
+#include "snedata.h"
+#include "lumdist.h"
+#include "cosgrids.h"
 
 /*!
   \brief Builds an array of luminosity distances, 0D case

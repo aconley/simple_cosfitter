@@ -11,13 +11,13 @@
 #include <algorithm>
 #include <cstdio>
 
-#include <param_tags.h>
-#include <param_results.h>
-#include <fitter.h>
-#include <cosfitterexcept.h>
-#include <cosgrids.h>
-#include <snedata.h>
-#include <utility.h>
+#include "param_tags.h"
+#include "param_results.h"
+#include "fitter.h"
+#include "cosfitterexcept.h"
+#include "cosgrids.h"
+#include "snedata.h"
+#include "utility.h"
 
 #if USEMKL
 #include <mkl_cblas.h>

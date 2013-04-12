@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include <cosgrids.h>
-#include <param_tags.h>
+#include "cosgrids.h"
+#include "param_tags.h"
 
 /*!
   \brief Utility functions

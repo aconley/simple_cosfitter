@@ -6,8 +6,8 @@
 #include <getopt.h>
 #include <string>
 
-#include <lumdist.h>
-#include <snedata.h>
+#include "lumdist.h"
+#include "snedata.h"
 
 using namespace std;
 

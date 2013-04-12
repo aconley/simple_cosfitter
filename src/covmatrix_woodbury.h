@@ -1,8 +1,6 @@
 #include <vector>
 #include <fstream>
 
-#include <covmatrix.h>
-
 #ifndef __covmatrix_woodbury__
 #define __covmatrix_woodbury__
 
@@ -14,6 +12,8 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_permutation.h>
 #endif
+
+#include "covmatrix.h"
 
 /*!
   \brief Covariance matricies that are of the form that

@@ -4,7 +4,7 @@
 #ifndef __w2df__
 #define __w2df__
 
-#include <cosgrids.h>
+#include "cosgrids.h"
 
 
 /*!

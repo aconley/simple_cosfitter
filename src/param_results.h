@@ -8,8 +8,8 @@
 #include <vector>
 #include <map>
 
-#include <param_tags.h>
-#include <cosgrids.h>
+#include "param_tags.h"
+#include "cosgrids.h"
 
 /*!
   \brief Structure for holding estimates for a single paramter from a fit.

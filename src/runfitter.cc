@@ -3,8 +3,8 @@
 
 #include <getopt.h>
 
-#include <fitter.h>
-#include <cosfitterexcept.h>
+#include "fitter.h"
+#include "cosfitterexcept.h"
 
 int main(int argc, char **argv) {
   

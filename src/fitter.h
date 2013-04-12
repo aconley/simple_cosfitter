@@ -10,13 +10,13 @@
 
 #include <ctime>
 
-#include <paramfile.h>
-#include <cosgrids.h>
-#include <snedata.h>
-#include <lumdist.h>
-#include <lumdist_array.h>
-#include <covmatrix.h>
-#include <param_results.h>
+#include "paramfile.h"
+#include "cosgrids.h"
+#include "snedata.h"
+#include "lumdist.h"
+#include "lumdist_array.h"
+#include "covmatrix.h"
+#include "param_results.h"
 
 /*!
   \defgroup fitter Cosmological Fitter

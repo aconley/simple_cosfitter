@@ -10,8 +10,8 @@
 #include <cmath>
 #include <gsl/gsl_errno.h>
 
-#include <lumdist.h>
-#include <cosfitterexcept.h>
+#include "lumdist.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

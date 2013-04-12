@@ -12,9 +12,9 @@
 #include <cstdlib>
 #include <getopt.h>
 
-#include <fitter.h>
-#include <lumdist.h>
-#include <cosfitterexcept.h>
+#include "fitter.h"
+#include "lumdist.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

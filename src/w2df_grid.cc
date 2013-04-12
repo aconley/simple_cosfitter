@@ -6,9 +6,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-#include <w2df.h>
-#include <cosgrids.h>
-#include <cosfitterexcept.h>
+#include "w2df.h"
+#include "cosgrids.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

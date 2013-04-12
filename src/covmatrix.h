@@ -1,10 +1,10 @@
 //covmatrix.h
 
-#include <vector>
-#include <fstream>
-
 #ifndef __covmatrix__
 #define __covmatrix__
+
+#include <vector>
+#include <fstream>
 
 /*!
   \defgroup linalg Linear Algebra

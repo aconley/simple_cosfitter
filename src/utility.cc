@@ -2,9 +2,9 @@
 #include <iterator>
 #include <sstream>
 
-#include <utility.h>
-#include <cosfitterexcept.h>
-#include <paramfile.h>
+#include "utility.h"
+#include "cosfitterexcept.h"
+#include "paramfile.h"
 
 using namespace std;
 

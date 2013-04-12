@@ -9,7 +9,7 @@
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_odeiv.h>
 
-#include <snedata.h>
+#include "snedata.h"
 
 /*!
   \defgroup lumdist Luminosity distance integrators

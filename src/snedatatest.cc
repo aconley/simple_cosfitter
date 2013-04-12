@@ -5,8 +5,8 @@
 #include<cmath>
 #include<ctime>
 
-#include <cosfitterexcept.h>
-#include <snedata.h>
+#include "cosfitterexcept.h"
+#include "snedata.h"
 
 using namespace std;
 

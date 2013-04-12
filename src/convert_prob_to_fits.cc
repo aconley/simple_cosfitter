@@ -6,8 +6,8 @@
 #include <string.h>
 #include <iostream>
 
-#include <cosgrids.h>
-#include <cosfitterexcept.h>
+#include "cosgrids.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include <cosfitterexcept.h>
-#include <param_results.h>
-#include <paramfile.h>
-#include <utility.h>
+#include "cosfitterexcept.h"
+#include "param_results.h"
+#include "paramfile.h"
+#include "utility.h"
 
 using namespace std;
 

@@ -1,10 +1,11 @@
 #ifndef __auxconstraint__
 #define __auxconstraint__
 
-#include <cosgrids.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multimin.h>
+
+#include "cosgrids.h"
 /*!
   \defgroup other_constraint  Constraints from other measurements
 */

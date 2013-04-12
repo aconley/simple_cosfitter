@@ -122,18 +122,18 @@ if test $gsllib; then
   else
      LDFLAGS="$LDFLAGS -L$gsllib"
   fi
-  AC_CHECK_LIB( gsl, main, ,
+  AC_CHECK_LIB( gsl, gsl_odeiv_step_alloc, ,
       AC_MSG_ERROR("libgsl not in location specified by --with-gsllib: $gsllib"),
       [ -lm -lgslcblas -L$gsllib ] )
-  AC_CHECK_LIB( gslcblas, main, ,
+  AC_CHECK_LIB( gslcblas, cblas_saxpy, ,
       AC_MSG_ERROR("libgslcblas not in location specified by --with-gsllib: $gsllib"),
-      [ -lm -L$gsllib ] )
+      [ -lm -L$gsllib -lgslcblas ] )
 else
   AC_MSG_RESULT( Checking GSL )
-  AC_CHECK_LIB( gsl, main, ,
+  AC_CHECK_LIB( gsl, gsl_odeiv_step_alloc, ,
       AC_MSG_ERROR("libgsl not found; use --with-gsllib"), [-lm -lgslcblas] )
-  AC_CHECK_LIB( gslcblas, main, ,
-      AC_MSG_ERROR("libgslcblas not found; use --with-gsllib"), [-lm] )
+  AC_CHECK_LIB( gslcblas, cblas_saxpy, ,
+      AC_MSG_ERROR("libgslcblas not found; use --with-gsllib"), [-lm -lgslcblas lgsl ] )
 fi
 
 AC_ARG_WITH(gslinc,

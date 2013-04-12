@@ -6,8 +6,8 @@
 #include <iterator>
 #include <set>
 
-#include <covmatrix.h>
-#include <covmatrix_woodbury.h>
+#include "covmatrix.h"
+#include "covmatrix_woodbury.h"
 
 /*!
   \defgroup snedata Supernova Data

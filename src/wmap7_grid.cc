@@ -6,10 +6,10 @@
 #include<getopt.h>
 #include<string>
 
-#include <param_tags.h>
-#include <paramfile.h>
-#include <auxconstraint.h>
-#include <cosfitterexcept.h>
+#include "param_tags.h"
+#include "paramfile.h"
+#include "auxconstraint.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 

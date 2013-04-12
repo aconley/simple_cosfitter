@@ -2,8 +2,8 @@
 #include <cmath>
 #include <ctime>
 
-#include <covmatrix.h>
-#include <covmatrix_woodbury.h>
+#include "covmatrix.h"
+#include "covmatrix_woodbury.h"
 
 int main( int argc, char **argv ) {
 

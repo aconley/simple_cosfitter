@@ -32,8 +32,8 @@ extern "C" {
 
 #endif
 
-#include <covmatrix_woodbury.h>
-#include <cosfitterexcept.h>
+#include "covmatrix_woodbury.h"
+#include "cosfitterexcept.h"
 
 
 //We avoid exceptions and most run-time error checking for 

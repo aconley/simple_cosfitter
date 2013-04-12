@@ -5,8 +5,8 @@
 #include <fstream>
 #include <sstream>
 
-#include <covmatrix.h>
-#include <cosfitterexcept.h>
+#include "covmatrix.h"
+#include "cosfitterexcept.h"
 
 #if USEMKL
 #include <mkl_cblas.h>

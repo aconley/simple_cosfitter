@@ -4,9 +4,9 @@
 //Uses code for calculating f due to Eric Linder
 
 #include <cmath>
-#include <w2df.h>
-#include <cosfitterexcept.h>
-#include <param_tags.h>
+#include "w2df.h"
+#include "cosfitterexcept.h"
+#include "param_tags.h"
 
 using namespace std;
 

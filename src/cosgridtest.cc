@@ -7,8 +7,8 @@
 #include <cmath>
 #include <assert.h>
 
-#include <cosgrids.h>
-#include <param_results.h>
+#include "cosgrids.h"
+#include "param_results.h"
 
 using namespace std;
 

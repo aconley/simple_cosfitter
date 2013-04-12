@@ -9,9 +9,9 @@
 #include <cmath>
 #include <stdlib.h>
 
-#include <cosgrids.h>
-#include <cosfitterexcept.h>
-#include <utility.h>
+#include "cosgrids.h"
+#include "cosfitterexcept.h"
+#include "utility.h"
 
 using namespace std;
 

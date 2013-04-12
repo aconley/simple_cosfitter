@@ -10,11 +10,11 @@
 #include <set>
 #include <getopt.h>
 
-#include <param_tags.h>
-#include <param_results.h>
-#include <fitter.h>
-#include <lumdist.h>
-#include <cosfitterexcept.h>
+#include "param_tags.h"
+#include "param_results.h"
+#include "fitter.h"
+#include "lumdist.h"
+#include "cosfitterexcept.h"
 
 using namespace std;
 
