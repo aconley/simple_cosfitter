@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(simple_cosfitter, 1.6.13, alexander.conley@colorado.edu)
+AC_INIT(simple_cosfitter, 1.6.14, alexander.conley@colorado.edu)
 AC_CONFIG_SRCDIR([src])
 AM_INIT_AUTOMAKE( [1.9] )
 AC_CONFIG_MACRO_DIR([m4])

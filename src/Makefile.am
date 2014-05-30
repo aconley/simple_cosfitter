@@ -18,11 +18,11 @@ libsimple_light_la_SOURCES = \
 if USECFITSIO 
 bin_PROGRAMS = runfitter combine_prob get_lumdist indivchi \
 		baryonpeak_grid wmap_grid w2df_grid convert_prob_to_fits \
-		convert_to_fits get_wmap_shift omprior_grid wmap7_grid \
+		convert_to_fits get_wmap_shift omprior_grid wmap9_grid \
 		percival_grid get_acoustic
 else
 bin_PROGRAMS = runfitter combine_prob get_lumdist indivchi omprior_grid \
-		baryonpeak_grid wmap_grid w2df_grid get_wmap_shift wmap7_grid \
+		baryonpeak_grid wmap_grid w2df_grid get_wmap_shift wmap9_grid \
 		percival_grid
 endif
 
@@ -49,8 +49,8 @@ baryonpeak_grid_LDFLAGS = -lsimple_light
 wmap_grid_SOURCES = auxconstraint.cc wmap_grid.cc auxconstraint.h
 wmap_grid_LDFLAGS = -lsimple_light
 
-wmap7_grid_SOURCES = auxconstraint.cc wmap7_grid.cc auxconstraint.h
-wmap7_grid_LDFLAGS = -lsimple_light
+wmap9_grid_SOURCES = auxconstraint.cc wmap9_grid.cc auxconstraint.h
+wmap9_grid_LDFLAGS = -lsimple_light
 
 percival_grid_SOURCES = auxconstraint.cc percival_grid.cc auxconstraint.h
 percival_grid_LDFLAGS = -lsimple_light

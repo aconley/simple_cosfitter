@@ -1,10 +1,11 @@
 #ifndef __auxconstraint__
 #define __auxconstraint__
 
-#include <cosgrids.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multimin.h>
+
+#include "cosgrids.h"
 /*!
   \defgroup other_constraint  Constraints from other measurements
 */
@@ -53,7 +54,9 @@ namespace auxconstraint {
   // which doesn't handle member functions
   double percival_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of Percival BAO fits
   double wmap7_shift_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP7 shift parameters
+  double wmap9_shift_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP9 shift parameters
   double percival_wmap7_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP7 shift parameters and Percival BAO fits
+  double percival_wmap9_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP9 shift parameters and Percival BAO fits
 
   //We do the constraints as classes because we need to initialize
   // internal work space for the integrator, and it's nice to 
@@ -262,7 +265,7 @@ namespace auxconstraint {
 
 
   /*!
-    \brief Class for WMAP 5th year distance to last scattering
+    \brief Class for WMAP 7th year distance to last scattering
 
     Prescription due to Komatsu et al. (2008) 
   */
@@ -290,9 +293,37 @@ namespace auxconstraint {
     double GetChiSq(double,double,double,double); //!< Returns \f$\chi^2\f$.
   };
 
+  /*!
+    \brief Class for WMAP 9th year distance to last scattering
+
+    Prescription due to Hinshaw et al. (2012) 
+  */
+  class wmap9yr_dls : public base_auxconstraint {
+  private:
+
+    //GSL stuff
+    static const gsl_multimin_fminimizer_type *T; //!< Type of fitter
+    gsl_vector * v; //!< Internal use vector for simplex minimization
+    gsl_vector *ss; //!< Step sizes for minimization
+    gsl_multimin_fminimizer *s;
+    gsl_multimin_function minex_func;
+
+    distance_helper dhelp; //!< Class for doing integrals
+  public:
+    wmap9yr_dls(bool fixcurve=false, double ocurv=0.0); //!< Constructor
+    ~wmap9yr_dls(); //!< Destructor
+
+    double GetAtrans() const { return dhelp.GetAtrans(); } //!< Returns transition a
+    void SetAtrans(double val) { dhelp.SetAtrans(val); } //!< Sets transition a
+    bool UsingKomatsuForm() const { return dhelp.UsingKomatsuForm(); } //!< Is the Komatsu form for \f$w \left(a\right)\f$ in use?
+    void SetUseKomatsuForm() { dhelp.SetUseKomatsuForm(); }//!< Turns on Komatsu form
+    void UnsetUseKomatsuForm() { dhelp.UnsetUseKomatsuForm(); } //!< Turns off the Komatsu form
+
+    double GetChiSq(double,double,double,double); //!< Returns \f$\chi^2\f$.
+  };
 
   /*!
-    \brief Class for joint WMAP 5th year distance to last scattering
+    \brief Class for joint WMAP 7th year distance to last scattering
     and Percival et al. (2009) SDSS+2dF BAO constraints
 
     This is useful because both fits have to minimize over the
@@ -321,6 +352,35 @@ namespace auxconstraint {
     double GetChiSq(double,double,double,double); //!< Returns \f$\chi^2\f$.
   };
 
+  /*!
+    \brief Class for joint WMAP 9th year distance to last scattering
+    and Percival et al. (2009) SDSS+2dF BAO constraints
+
+    This is useful because both fits have to minimize over the
+    same nuisance variables, so it should be faster to do both at once.
+  */
+  class baoP09_wmap9yr_dls : public base_auxconstraint {
+  private:
+    //GSL stuff
+    static const gsl_multimin_fminimizer_type *T; //!< Type of fitter
+    gsl_vector * v; //!< Internal use vector for simplex minimization
+    gsl_vector *ss; //!< Step sizes for minimization
+    gsl_multimin_fminimizer *s;
+    gsl_multimin_function minex_func;
+
+    distance_helper dhelp; //!< Class for doing integrals
+  public:
+    baoP09_wmap9yr_dls(bool fixcurve=false, double ocurv=0.0); //!< Constructor
+    ~baoP09_wmap9yr_dls(); //!< Destructor
+
+    double GetAtrans() const { return dhelp.GetAtrans(); } //!< Returns transition a
+    void SetAtrans(double val) { dhelp.SetAtrans(val); } //!< Sets transition a
+    bool UsingKomatsuForm() const { return dhelp.UsingKomatsuForm(); } //!< Is the Komatsu form for \f$w \left(a\right)\f$ in use?
+    void SetUseKomatsuForm() { dhelp.SetUseKomatsuForm(); }//!< Turns on Komatsu form
+    void UnsetUseKomatsuForm() { dhelp.UnsetUseKomatsuForm(); } //!< Turns off the Komatsu form
+
+    double GetChiSq(double,double,double,double); //!< Returns \f$\chi^2\f$.
+  };
 
   //Gaussian prior on Om
   class omprior : public base_auxconstraint {
