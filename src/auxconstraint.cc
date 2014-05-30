@@ -631,6 +631,80 @@ double auxconstraint::wmap7_shift_chisq(const gsl_vector *v, void *params) {
   return chisq;
 }
 
+/*!
+  \param[in] v Vector of \f$h, \Omega_b h^2\f$
+  \param[in] params Other parameters, very indirectly
+  \returns \f$\chi^2\f$
+*/
+double auxconstraint::wmap9_shift_chisq(const gsl_vector *v, void *params) {
+
+  const double pi = 3.14159265358979323846264338327950288419716939937510582;
+  const double wmap9_params[3] = { 302.40, 1.7246, 1090.88 };
+  const double badval = 1e50;
+
+  double h, h2, obh2;
+  h = gsl_vector_get(v,0);
+  obh2 = gsl_vector_get(v,1);
+  h2 = h*h;
+  
+  void **vptr = static_cast<void**>(params);
+
+  distance_helper *const dh = static_cast<distance_helper *const>(vptr[0]);
+  
+  double* in_params = static_cast<double*>(vptr[1]);
+  double om, ode, w0, wa;
+  w0 = in_params[0];
+  wa = in_params[1];
+  om = in_params[2];
+  ode = in_params[3];
+  
+  double omh2;
+  omh2 = om * h2;
+
+  double orad;
+  orad = oradh2 / h2;
+
+  //Bad value test
+  if ( om < 0 || obh2 < 0 || h < 0 || obh2 / h2 > om) 
+    return badval;
+
+  double zs;
+  zs = dh->GetZstar( obh2, omh2 );
+
+  double K1, K2;
+  bool success_K1, success_K2;
+  K1=dh->GetK1( zs, obh2, om, ode, w0, wa, h, success_K1 );
+  if (! success_K1) return badval; //Failure
+  if (K1 == 0) return badval; //Failure
+  K2=dh->GetK2( zs, om, ode, orad, w0, wa, success_K2 );
+  if (! success_K2) return badval; //Failure
+
+  double la, R;
+  la = pi * K2 / K1;
+  R  = sqrt( om )*K2;
+
+  double delta_params[3]; //Between params and WMAP fits
+  delta_params[0] = la - wmap9_params[0];
+  delta_params[1] = R - wmap9_params[1];
+  delta_params[2] = zs - wmap9_params[2];
+
+  //Table 11 of Hinshaw et al. 2012
+  double invcov[3][3];
+  invcov[0][0] = 3.182;
+  invcov[0][1] = invcov[1][0] = 18.253;
+  invcov[0][2] = invcov[2][0] = -1.429;
+  invcov[1][1] = 11887.879;
+  invcov[1][2] = invcov[2][1] = -193.808;
+  invcov[2][2] = 4.556;
+
+  double chisq;
+  chisq = 0.0;
+  for (unsigned int i = 0; i < 3; ++i)
+    for (unsigned int j = 0; j < 3; ++j)
+      chisq += delta_params[i] * invcov[i][j] * delta_params[j];
+
+  return chisq;
+}
 
 /*!
   \param[in] v Vector of \f$h, \Omega_b h^2\f$
@@ -739,6 +813,119 @@ double auxconstraint::percival_wmap7_chisq(const gsl_vector *v, void *params) {
   for (unsigned int i = 0; i < 3; ++i)
     for (unsigned int j = 0; j < 3; ++j)
       chisq += delta_params_wmap[i] * invcov_wmap[i][j] * 
+	delta_params_wmap[j];
+
+  return chisq;
+}
+
+
+/*!
+  \param[in] v Vector of \f$h, \Omega_b h^2\f$
+  \param[in] params Other parameters, very indirectly
+  \returns \f$\chi^2\f$ of Percival BAO and WMAP7
+*/
+double auxconstraint::percival_wmap9_chisq(const gsl_vector *v, void *params) {
+
+  const unsigned int nz = 2;
+  const double percival_z[nz] = { 0.2, 0.35 };
+  const double percival_params[nz] = { 0.1905, 0.1097 };
+  const double pi = 3.14159265358979323846264338327950288419716939937510582;
+  const double wmap9_params[3] = { 302.40, 1.7246, 1090.88 };
+  const double badval = 1e50;
+
+  double h, h2, obh2;
+  h = gsl_vector_get(v,0);
+  obh2 = gsl_vector_get(v,1);
+  h2 = h*h;
+  
+  void **vptr = static_cast<void**>(params);
+
+  distance_helper *const dh = static_cast<distance_helper *const>(vptr[0]);
+  
+  double* in_params = static_cast<double*>(vptr[1]);
+  double om, ode, w0, wa;
+  w0 = in_params[0];
+  wa = in_params[1];
+  om = in_params[2];
+  ode = in_params[3];
+  
+  double omh2;
+  omh2 = om * h2;
+
+  double orad;
+  orad = oradh2 / h2;
+
+  //Bad value test
+  if ( om < 0 || obh2 < 0 || h < 0 || obh2 / h2 > om) 
+    return badval;
+
+  double zdrag, zstar;
+  zdrag = dh->GetZdrag( obh2, omh2 );
+  zstar = dh->GetZstar( obh2, omh2 );
+
+  //Get H0 rs(zd)/c
+  double K1_wmap, K1_bao, K2_wmap, K2_bao_0, K2_bao_1;
+  bool success_K1, success_K2;
+  K1_bao=dh->GetK1( zdrag, obh2, om, ode, w0, wa, h, success_K1 );
+  if (! success_K1) return badval; //Failure
+  K1_wmap=dh->GetK1( zstar, obh2, om, ode, w0, wa, h, success_K1 );
+  if (! success_K1 || K1_wmap == 0.0) return badval; //Failure
+
+  K2_wmap=dh->GetK2( zstar, om, ode, orad, w0, wa, success_K2 );
+  if (! success_K2) return badval; //Failure
+  K2_bao_0=dh->GetK2( percival_z[0], om, ode, orad, w0, wa, success_K2 );
+  if (! success_K2 || K2_bao_0 == 0) return badval; //Failure
+  K2_bao_1=dh->GetK2( percival_z[1], om, ode, orad, w0, wa, success_K2 );
+  if (! success_K2 || K2_bao_1 == 0) return badval; //Failure
+
+  //WMAP shift params
+  double la, R;
+  la = pi * K2_wmap / K1_wmap;
+  R  = sqrt( om )*K2_wmap;
+
+  //Really, we hold H0/c CV = [K2^2 z/E]^1/3
+  double DV_0, DV_1;
+  bool success_DV;
+  DV_0 = pow( K2_bao_0 * K2_bao_0 * percival_z[0] * 
+	      dh->GetOneOverE( percival_z[0], om, ode, orad, w0, wa, 
+			       success_DV ), 1.0/3.0 );
+  if ( ! success_DV || DV_0 == 0 ) return badval;  //Failure
+  DV_1 = pow( K2_bao_1 * K2_bao_1 * percival_z[1] * 
+	      dh->GetOneOverE( percival_z[1], om, ode, orad, w0, wa, 
+			       success_DV ), 1.0/3.0 );
+  if ( ! success_DV || DV_1 == 0 ) return badval;  //Failure
+
+  double delta_params_bao[2]; //Difference between values and Percival fits
+  delta_params_bao[0] = K1_bao/DV_0 - percival_params[0];
+  delta_params_bao[1] = K1_bao/DV_1 - percival_params[1];
+
+  double invcov_bao[2][2];
+  invcov_bao[0][0] = 30124.0;
+  invcov_bao[0][1] = invcov_bao[1][0] = -17227.0;
+  invcov_bao[1][1] = 86977.0;
+
+  double chisq;
+  chisq = 0.0;
+  for (unsigned int i = 0; i < 2; ++i)
+    for (unsigned int j = 0; j < 2; ++j)
+      chisq += delta_params_bao[i] * invcov_bao[i][j] * delta_params_bao[j];
+
+  double delta_params_wmap[3]; //Between params and WMAP fits
+  delta_params_wmap[0] = la - wmap7_params[0];
+  delta_params_wmap[1] = R - wmap7_params[1];
+  delta_params_wmap[2] = zstar - wmap7_params[2];
+
+  //Table 11 of Hinshaw et al. 2012
+  double invcov_wmap[3][3];
+  invcov_wmap[0][0] = 3.182;
+  invcov_wmap[0][1] = invcov_wmap[1][0] = 18.253;
+  invcov_wmap[0][2] = invcov_wmap[2][0] = -1.429;
+  invcov_wmap[1][1] = 11887.879;
+  invcov_wmap[1][2] = invcov_wmap[2][1] = -193.808;
+  invcov_wmap[2][2] = 4.556;
+  for (unsigned int i = 0; i < 3; ++i)
+    for (unsigned int j = 0; j < 3; ++j)
+      chisq += delta_params_wmap[i] * invcov_wmap_wmap[i][j] * 
 	delta_params_wmap[j];
 
   return chisq;
@@ -2104,6 +2291,152 @@ auxconstraint::wmap7yr_dls::GetChiSq(double w0, double wa,
   return chisq;
 
 }
+
+////////////////////////////////////////////////////////////////////
+//               WMAP9 Shift parameters
+////////////////////////////////////////////////////////////////////
+
+const gsl_multimin_fminimizer_type* auxconstraint::wmap9yr_dls::T =
+  gsl_multimin_fminimizer_nmsimplex;
+
+auxconstraint::wmap9yr_dls::wmap9yr_dls(bool fcurv, double ok) :
+  base_auxconstraint(fcurv,ok) {
+  v = gsl_vector_alloc(2);
+  ss = gsl_vector_alloc(2);
+  const gsl_multimin_fminimizer_type *T = gsl_multimin_fminimizer_nmsimplex;
+  s = gsl_multimin_fminimizer_alloc(T, 2);
+}
+auxconstraint::wmap9yr_dls::~wmap9yr_dls() {
+  gsl_vector_free(v);
+  gsl_vector_free(ss);
+  gsl_multimin_fminimizer_free(s);
+}
+
+/*!
+  \param[in] w0   \f$w_0\f$
+  \param[in] wa   \f$w_a\f$
+  \param[in] om  \f$\Omega_m\f$
+  \param[in] ode \f$\Omega_{DE}\f$
+  \returns \f$\chi^2\f$ at parameter values for WMAP9 shift parameters
+
+  This follows the prescription of Komatsu et al. (2008).  The
+  nuisance parameters \f$\Omega_b h^2\f$ and \f$h\f$ are marginalized
+  over by minimizing the \f$\chi^2\f$ for these parameters at each
+  value of the cosmological parameters (see Lampton et al. (1976) for
+  discussion).
+*/
+double
+auxconstraint::wmap9yr_dls::GetChiSq(double w0, double wa,
+				     double om, double ode) {
+  
+  const size_t maxiter = 500;
+  const double badval = 1e30;
+  const double sizetol1 = 1e-4, sizetol2 = 1e-6;
+
+  if (om <= 0) return badval;  //Can't handle no matter universe
+  
+
+  //Do an initial evalution of K2 to make sure we aren't in a bad region
+  // using default values.  Basically, this is to test for bad closed
+  // universes with 0 or negative D_A
+  bool K2_test_success;
+  dhelp.GetK2( 1090.0, om, ode, 5e-5, w0, wa, K2_test_success );
+  if (!K2_test_success) return badval;
+
+  //Set initial conditions for h, obh2 to WMAP9 values
+  gsl_vector_set(v, 0, 0.724);
+  gsl_vector_set(v, 1, 0.02268);
+
+  //Set initial step sizes
+  gsl_vector_set(ss, 0, 0.05);
+  gsl_vector_set(ss, 1, 0.004);
+  
+  //Make par vector
+  double params[4];
+  params[0] = w0;
+  params[1] = wa;
+  params[2] = om;
+  params[3] = ode;
+  
+  //We have to jump through some serious hoops to pass
+  // in an instance of the class as a parameter
+  void **varr;
+  varr = new void*[2];
+  varr[0] = static_cast<void*>(&dhelp); //This is evil, but such is c++->c
+  varr[1] = static_cast<void*>(params);
+  void *vptr;
+  vptr = static_cast<void*>(varr);
+
+  //Setup function
+  minex_func.n = 2;
+  minex_func.f = &wmap9_shift_chisq;
+  minex_func.params = vptr;
+
+  gsl_multimin_fminimizer_set(s, &minex_func, v, ss);
+
+  int status;
+  size_t iter = 0;
+  double size;
+  do {
+    iter++;
+    status = gsl_multimin_fminimizer_iterate(s);
+           
+    if (status) 
+      break;
+     
+    size = gsl_multimin_fminimizer_size(s);
+    status = gsl_multimin_test_size(size, sizetol1);
+     
+    /*
+      printf ("%5d %10.3e %10.3e f() = %10.3e size = %.7f\n", 
+      iter,
+      gsl_vector_get(s->x, 0), 
+      gsl_vector_get(s->x, 1), 
+      s->fval, size);
+    */
+  } while (status == GSL_CONTINUE && iter < maxiter);
+
+  //We use non-converged minima anyways, but warn
+  if (status != GSL_SUCCESS) {
+    printf("Warning -- simplex did not converge\n");
+    printf(" at w0: %6.3f wa: %6.3f om: %5.3f ode: %6.3f\n",
+	   w0,wa,om,ode);
+  } else {
+    //Following the recommendation of NumRec, if we succeeded
+    // we restart the minimization at the current guess
+
+    //reset initial step sizes to half old values
+    gsl_vector_set(ss, 0, 0.025);
+    gsl_vector_set(ss, 1, 0.002);
+
+    gsl_multimin_fminimizer_set(s, &minex_func, s->x, ss);
+    iter = static_cast<size_t>(0);
+    do {
+      iter++;
+      status = gsl_multimin_fminimizer_iterate(s);
+      if (status) 
+	break;
+      size = gsl_multimin_fminimizer_size(s);
+      status = gsl_multimin_test_size(size, sizetol2);
+    } while (status == GSL_CONTINUE && iter < maxiter);
+    if (status != GSL_SUCCESS) {
+      printf("Warning -- second simplex did not converge\n");
+      printf(" at w0: %6.3f wa: %6.3f om: %5.3f ode: %6.3f\n",
+	     w0,wa,om,ode);
+    }
+  }
+
+  //Get chisq at minimum
+  double chisq;
+  chisq = wmap9_shift_chisq( s->x, varr );
+
+  //Clean up
+  delete[] varr;
+
+  return chisq;
+
+}
+
 
 ///////////////////////////////////////////////////////////////
 //                         omprior                           //

@@ -54,7 +54,9 @@ namespace auxconstraint {
   // which doesn't handle member functions
   double percival_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of Percival BAO fits
   double wmap7_shift_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP7 shift parameters
+  double wmap9_shift_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP9 shift parameters
   double percival_wmap7_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP7 shift parameters and Percival BAO fits
+  double percival_wmap9_chisq(const gsl_vector *v, void *params); //<! \f$\chi^2\f$ of WMAP9 shift parameters and Percival BAO fits
 
   //We do the constraints as classes because we need to initialize
   // internal work space for the integrator, and it's nice to 
