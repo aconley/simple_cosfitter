@@ -18,6 +18,10 @@ Installation is via the standard UNIX `configure` and
 It may be necessary to tell configure where to look for these
 libraries -- see `configure --help`.
 
+Note that if you got this from github rather than downloading
+a .tgz, you may need to do something like `autoreconf -fvi` before
+building to set up the build environment.
+
 ### Documentation
 
 Fuller documentation is provided using Doxygen.  This
